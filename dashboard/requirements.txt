@@ -1,7 +1,7 @@
 streamlit
 pandas
 numpy
-matplotlib==3.7.1
+matplotlib
 plotly
 seaborn
 
