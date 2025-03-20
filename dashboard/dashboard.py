@@ -1,51 +1,50 @@
+import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import streamlit as st
-from babel.numbers import format_currency
-sns.set(style='dark')
 
-# Judul Aplikasi
-st.title("Analisis Kualitas Udara di Beijing")
+# Fungsi untuk memuat dataset
+@st.cache_data
+def load_data():
+    df = pd.read_csv("data.csv")  # Ganti dengan nama file datasetmu
+    return df
 
-# Upload Dataset
-st.sidebar.header("Upload File CSV")
-uploaded_file = st.sidebar.file_uploader("Pilih file CSV", type=["csv"])
+# Fungsi untuk menampilkan data
+def show_dataset(df):
+    st.subheader("📌 Dataset")
+    st.write(df.head())  # Menampilkan 5 data pertama
 
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+# Fungsi untuk menampilkan statistika deskriptif
+def show_statistics(df):
+    st.subheader("📊 Statistika Deskriptif")
+    st.write(df.describe())  # Statistik ringkasan
 
-    # Menampilkan Data
-    st.subheader("📊 Data Awal")
-    st.write(df.head())
+# Fungsi untuk visualisasi data
+def show_visualization(df):
+    st.subheader("📈 Visualisasi Data")
+    
+    # Contoh visualisasi distribusi satu variabel
+    selected_column = st.selectbox("Pilih Kolom untuk Histogram", df.columns)
+    fig, ax = plt.subplots(figsize=(8, 4))
+    sns.histplot(df[selected_column].dropna(), kde=True, ax=ax)
+    st.pyplot(fig)
 
-    # Statistik Deskriptif
-    st.subheader("📈 Statistik Deskriptif")
-    st.write(df.describe())
+# Fungsi utama untuk menjalankan Streamlit App
+def main():
+    st.title("📊 Dashboard Analisis Data")
+    st.sidebar.header("Navigasi")
+    menu = ["Dataset", "Statistika Deskriptif", "Visualisasi Data"]
+    choice = st.sidebar.radio("Pilih Menu", menu)
 
-    # Visualisasi Distribusi PM2.5
-    st.subheader("📌 Distribusi PM2.5")
-    plt.figure(figsize=(8,5))
-    sns.histplot(df["PM2.5"].dropna(), bins=30, kde=True)
-    plt.xlabel("PM2.5")
-    plt.ylabel("Frekuensi")
-    plt.title("Distribusi PM2.5")
-    st.pyplot(plt)
+    df = load_data()  # Load dataset
 
-    # Visualisasi Tren PM2.5
-    st.subheader("📌 Tren PM2.5 dari Waktu ke Waktu")
-    if all(col in df.columns for col in ["year", "month", "day", "hour"]):
-        df["datetime"] = pd.to_datetime(df[["year", "month", "day", "hour"]])
-        plt.figure(figsize=(10, 5))
-        sns.lineplot(x="datetime", y="PM2.5", data=df)
-        plt.xticks(rotation=45)
-        plt.xlabel("Waktu")
-        plt.ylabel("PM2.5")
-        plt.title("Tren PM2.5")
-        st.pyplot(plt)
-    else:
-        st.warning("Kolom waktu tidak tersedia dalam dataset!")
+    if choice == "Dataset":
+        show_dataset(df)
+    elif choice == "Statistika Deskriptif":
+        show_statistics(df)
+    elif choice == "Visualisasi Data":
+        show_visualization(df)
 
-else:
-    st.info("Silakan upload file CSV untuk mulai analisis.")
-
+# Menjalankan aplikasi
+if __name__ == "__main__":
+    main()
