@@ -8,7 +8,8 @@ Air Quality Dashboard adalah suatu dashboard visualisasi data kualitas udara di 
 - Analisis Jam dengan Kualitas Udara Terburuk
 
 ## Penggunaan
+```
 git clone https://github.com/radyaardinp/air-quality-dashboard.git
-cd air-quality-dashboard
 pip install -r requirements.txt
 streamlit run dashboard.py
+```
