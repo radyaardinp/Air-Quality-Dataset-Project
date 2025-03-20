@@ -2,6 +2,15 @@ import streamlit as st
 import pandas as pd
 import matplotlib as plt
 import seaborn as sns
+import os
+import subprocess
+
+# Cek apakah matplotlib sudah terinstall, jika tidak maka install dulu
+try:
+    import matplotlib.pyplot as plt
+except ModuleNotFoundError:
+    subprocess.check_call(["pip", "install", "matplotlib"])
+    import matplotlib.pyplot as plt
 
 # Fungsi untuk memuat dataset
 @st.cache_data
