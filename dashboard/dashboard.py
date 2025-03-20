@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 # Fungsi untuk memuat dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data.csv")  # Ganti dengan nama file datasetmu
+    df = pd.read_csv("df_all.csv")  # Ganti dengan nama file datasetmu
     return df
 
 # Fungsi untuk menampilkan data
