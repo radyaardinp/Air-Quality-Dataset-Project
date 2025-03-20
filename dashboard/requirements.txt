@@ -1,6 +1,8 @@
 streamlit
+python==3.10
 pandas
+numpy
 matplotlib==3.7.1
 plotly
 seaborn
-numpy
+
