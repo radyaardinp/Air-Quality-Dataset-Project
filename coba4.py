@@ -478,10 +478,11 @@ if 'year' in df.columns and selected_pollutant in df.columns:
         # Warna line & fill
         PRIMARY = "#007bff"
         ACCENT = "#1f77b4"
+        plot_df = df_filtered[["date", "PM2.5"]].dropna()
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=[1,2,3],
-            y=[4,5,6],
+            x=df_filtered["date"],
+            y=df_filtered["PM2.5"],
             mode='lines+markers',  # <- wajib ada 'lines' supaya fill/tozeroy bisa
             line=dict(color=PRIMARY, width=3),
             marker=dict(size=8),
@@ -490,8 +491,11 @@ if 'year' in df.columns and selected_pollutant in df.columns:
         ))
 
         fig.update_layout(
-            yaxis=dict(showgrid=True, gridwidth=0.3),
-            hovermode="x unified")
+            title="Trend PM2.5",
+            xaxis_title="Tanggal",
+            yaxis_title="PM2.5 (µg/m³)",
+            template="plotly_white"
+        )
         st.plotly_chart(fig, use_container_width=True)
 
         # Kesimpulan tren
