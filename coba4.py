@@ -276,16 +276,14 @@ with col_a:
         
             fig.update_layout(
                 polar=dict(
-                    angularaxis=dict(direction="counterclockwise",
+                    angularaxis=dict(direction="clockwise",
                                     rotation=90,
                                     tickmode='array',
-                                    tickvals=[
-                                        0, 22.5, 45, 67.5,
+                                    tickvals=[0, 22.5, 45, 67.5,
                                         90, 112.5, 135, 157.5,
                                         180, 202.5, 225, 247.5,
                                         270, 292.5, 315, 337.5],
-                                    ticktext=[
-                                        "N", "NNE", "NE", "ENE",
+                                    ticktext=["N", "NNE", "NE", "ENE",
                                         "E", "ESE", "SE", "SSE",
                                         "S", "SSW", "SW", "WSW",
                                         "W", "WNW", "NW", "NNW"],),
@@ -478,11 +476,13 @@ if 'year' in df.columns and selected_pollutant in df.columns:
                 selected_pollutant: f"{selected_pollutant} (µg/m³)"})
 
         # Warna line & fill
-        fig.update_traces(
-            line=dict(width=3, color=PRIMARY),
-            marker=dict(size=8),
-            fill='tozeroy',
-            fillcolor=ACCENT + "55")
+        PRIMARY = "#007bff"
+        ACCENT = "#28a745"
+        if any(trace.type == 'scatter' for trace in fig.data):
+            fig.update_traces(
+                line=dict(width=3, color=PRIMARY),
+                fill='tozeroy',
+                fillcolor=ACCENT + "55")
 
         fig.update_layout(
             yaxis=dict(showgrid=True, gridwidth=0.3),
