@@ -487,7 +487,7 @@ if 'year' in df.columns and selected_pollutant in df.columns:
             line=dict(color=PRIMARY, width=3),
             marker=dict(size=8),
             fill='tozeroy',
-            fillcolor=ACCENT + "55"
+            fillcolor=[ACCENT] + "55"
         ))
 
         fig.update_layout(
