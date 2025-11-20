@@ -482,7 +482,7 @@ if 'year' in df.columns and selected_pollutant in df.columns:
             fig.update_traces(
                 line=dict(width=3, color=PRIMARY),
                 fill='tozeroy',
-                fillcolor=ACCENT + "55")
+                fillcolor=ACCENT + "55",)
 
         fig.update_layout(
             yaxis=dict(showgrid=True, gridwidth=0.3),
