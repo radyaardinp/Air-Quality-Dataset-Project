@@ -232,12 +232,17 @@ st.subheader("Pilih Wilayah")
 stations = ["Semua Wilayah"] + sorted(df["station"].dropna().unique().tolist())
 selected_station = st.selectbox("Pilih Stasiun (Wilayah)", stations)
 
+if selected_station == "Semua Wilayah":
+    df_filtered = df.copy()
+else:
+    df_filtered = df[df["station"] == selected_station].copy()
+
 col_a, col_b = st.columns([1, 1])
 with col_a:
     st.subheader("🌬️Visualisasi Arah Datangnya Polusi")
     
     # Check if wind direction and speed columns exist
-    if "wd" in df.columns and "WSPM" in df.columns:
+    if "wd" in df_filtered.columns and "WSPM" in df.columns:
         # Function to convert wind direction string to degrees
         def wind_direction_to_degrees(wd_str):
             """Convert wind direction string to degrees (0-360)"""
@@ -251,7 +256,7 @@ with col_a:
             return direction_map.get(str(wd_str).strip().upper(), np.nan)
         
         # Prepare wind data
-        wind_data = df[["wd", "WSPM"]].copy()
+        wind_data = df_filtered[["wd", "WSPM"]].copy()
         wind_data["wd_degrees"] = wind_data["wd"].apply(wind_direction_to_degrees)
         wind_data = wind_data.dropna()
         wind_data = wind_data[wind_data["WSPM"] >= 0]
@@ -290,7 +295,7 @@ with col_a:
         else:
             st.info("Data arah angin tidak cukup untuk wind rose (min 50 data point). Menampilkan distribusi arah angin.")
         
-            direction_counts = df["wd"].value_counts().reset_index()
+            direction_counts = df_filtered["wd"].value_counts().reset_index()
             direction_counts.columns = ["direction", "count"]
             direction_counts["deg"] = direction_counts["direction"].apply(wind_direction_to_degrees)
             direction_counts = direction_counts.dropna().sort_values("deg")
@@ -321,7 +326,7 @@ with col_b:
     st.subheader("🎯 Distribusi Kategori Kualitas Udara")
     
     if "air_quality_category" in df.columns:
-        cat_counts = df["air_quality_category"].value_counts()
+        cat_counts = df_filtered["air_quality_category"].value_counts()
         
         # Define colors for each category
         color_map = {
@@ -354,7 +359,7 @@ st.markdown("---")
 # Row 2: Seasonal Trend per Region
 st.subheader("📅 Tren dan Rata-rata PM2.5 Berdasarkan Musim")
 
-if "season" in df.columns and "PM2.5" in df.columns:
+if "season" in df_filtered.columns and "PM2.5" in df.columns:
     if selected_station == "Semua Wilayah":
         # Show comparison across all regions
         season_region = df.groupby(['season', 'station'])['PM2.5'].mean().reset_index()
@@ -379,7 +384,7 @@ if "season" in df.columns and "PM2.5" in df.columns:
 
         st.plotly_chart(fig, use_container_width=True)
     else:
-        season_data = df.groupby('season')['PM2.5'].mean().sort_values(ascending=False)
+        season_data = df_filtered.groupby('season')['PM2.5'].mean().sort_values(ascending=False)
 
         fig = px.bar(
             x=season_data.index,
@@ -441,7 +446,7 @@ selected_pollutant = st.selectbox(
 if 'year' in df.columns and selected_pollutant in df.columns:
     if selected_station == "Semua Wilayah":
         # Compare all regions
-        yearly_region = df.groupby(['year', 'station'])[selected_pollutant].mean().reset_index()
+        yearly_region = df_filtered.groupby(['year', 'station'])[selected_pollutant].mean().reset_index()
         
         fig = px.line(
             yearly_region,
@@ -460,7 +465,7 @@ if 'year' in df.columns and selected_pollutant in df.columns:
             yaxis=dict(showgrid=True, gridwidth=0.3) )
         st.plotly_chart(fig, use_container_width=True)
     else:
-        trend_df = df.groupby('year')[selected_pollutant].mean().reset_index()
+        trend_df = df_filtered.groupby('year')[selected_pollutant].mean().reset_index()
 
         fig = px.line(
             trend_df,
@@ -503,7 +508,7 @@ st.subheader("2️⃣ Perbedaan Tingkat Polusi Antar Wilayah")
 
 if selected_pollutant in df.columns:
     if selected_station == "Semua Wilayah":
-        region_avg = df.groupby('station')[selected_pollutant].mean().sort_values(ascending=False).reset_index()
+        region_avg = df_filtered.groupby('station')[selected_pollutant].mean().sort_values(ascending=False).reset_index()
         
         col1, col2 = st.columns([2, 1])
         
@@ -559,7 +564,7 @@ st.subheader("3️⃣ Waktu dengan Kualitas Udara Paling Buruk")
 if 'hour' in df.columns and selected_pollutant in df.columns:
     if selected_station == "Semua Wilayah":
         # Show all regions comparison
-        hourly_region = df.groupby(['hour', 'station'])[selected_pollutant].mean().reset_index()
+        hourly_region = df_filtered.groupby(['hour', 'station'])[selected_pollutant].mean().reset_index()
         
         fig = px.line(
             hourly_region,
