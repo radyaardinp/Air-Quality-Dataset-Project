@@ -102,7 +102,6 @@ if selected_station != "Semua Wilayah":
 # Page Layout
 # -------------------------
 st.title("🌍 Air Quality Dashboard — Beijing 2013-2017")
-st.markdown(f"**Wilayah terpilih:** {selected_station} | **Polutan:** {selected_pollutant}")
 st.markdown("---")
 
 # ========================
@@ -288,24 +287,77 @@ with col_a:
     
     # Check if wind direction and speed columns exist
     if "wd" in df_filtered.columns and "WSPM" in df_filtered.columns:
-        # Remove NaN values
-        wind_data = df_filtered[["wd", "WSPM", selected_pollutant]].dropna()
+        # Function to convert wind direction string to degrees
+        def wind_direction_to_degrees(wd_str):
+            """Convert wind direction string to degrees (0-360)"""
+            direction_map = {
+                'N': 0, 'NNE': 22.5, 'NE': 45, 'ENE': 67.5,
+                'E': 90, 'ESE': 112.5, 'SE': 135, 'SSE': 157.5,
+                'S': 180, 'SSW': 202.5, 'SW': 225, 'WSW': 247.5,
+                'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5
+            }
+            if pd.isna(wd_str):
+                return np.nan
+            return direction_map.get(str(wd_str).strip().upper(), np.nan)
         
-        if len(wind_data) > 0:
-            fig = plt.figure(figsize=(6, 6))
-            ax = WindroseAxes.from_ax(fig=fig)
-            ax.bar(
-                wind_data["wd"], 
-                wind_data["WSPM"], 
-                normed=True, 
-                opening=0.8, 
-                edgecolor='white',
-                cmap=plt.cm.viridis
-            )
-            ax.set_legend(title="Kecepatan Angin (m/s)")
-            st.pyplot(fig)
+        # Prepare wind data
+        wind_data = df_filtered[["wd", "WSPM"]].copy()
+        
+        # Convert wind direction to degrees
+        wind_data["wd_degrees"] = wind_data["wd"].apply(wind_direction_to_degrees)
+        
+        # Remove NaN values and filter valid data
+        wind_data = wind_data.dropna()
+        wind_data = wind_data[wind_data["WSPM"] >= 0]
+        
+        if len(wind_data) > 50:  # Need enough data points for windrose
+            try:
+                fig = plt.figure(figsize=(6, 6))
+                ax = WindroseAxes.from_ax(fig=fig)
+                ax.bar(
+                    wind_data["wd_degrees"].values, 
+                    wind_data["WSPM"].values, 
+                    normed=True, 
+                    opening=0.8, 
+                    edgecolor='white',
+                    cmap=plt.cm.viridis,
+                    bins=6
+                )
+                ax.set_legend(title="Kecepatan Angin (m/s)", loc='upper left', bbox_to_anchor=(1.1, 1))
+                st.pyplot(fig)
+            except Exception as e:
+                st.warning(f"Tidak dapat membuat wind rose chart. Menampilkan distribusi arah angin sebagai gantinya.")
+                # Fallback: show wind direction distribution as polar bar chart
+                fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(projection='polar'))
+                
+                # Count frequency of each direction
+                direction_counts = df_filtered["wd"].value_counts()
+                
+                # Map to degrees and sort
+                direction_degrees = {d: wind_direction_to_degrees(d) for d in direction_counts.index}
+                sorted_dirs = sorted(direction_degrees.items(), key=lambda x: x[1] if not pd.isna(x[1]) else 999)
+                
+                theta = [np.deg2rad(deg) for _, deg in sorted_dirs if not pd.isna(deg)]
+                counts = [direction_counts[dir_name] for dir_name, deg in sorted_dirs if not pd.isna(deg)]
+                
+                if len(theta) > 0:
+                    width = np.deg2rad(22.5)
+                    bars = ax.bar(theta, counts, width=width, bottom=0.0, alpha=0.7)
+                    
+                    # Color bars based on frequency
+                    max_count = max(counts) if counts else 1
+                    colors = plt.cm.viridis(np.array(counts) / max_count)
+                    for bar, color in zip(bars, colors):
+                        bar.set_facecolor(color)
+                    
+                    ax.set_theta_zero_location('N')
+                    ax.set_theta_direction(-1)
+                    ax.set_title('Distribusi Arah Angin', pad=20)
+                    st.pyplot(fig)
+                else:
+                    st.info("Data arah angin tidak valid.")
         else:
-            st.info("Data arah angin tidak tersedia untuk periode ini.")
+            st.info("Data arah angin tidak cukup untuk periode ini (minimal 50 data point diperlukan).")
     else:
         st.info("Kolom 'wd' (wind direction) atau 'WSPM' tidak tersedia dalam data.")
 
