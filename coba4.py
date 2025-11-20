@@ -478,16 +478,16 @@ if 'year' in df.columns and selected_pollutant in df.columns:
         # Warna line & fill
         PRIMARY = "#007bff"
         ACCENT = "#1f77b4"
-        for trace in fig.data:
-            if trace.type == 'scatter' and 'lines' in trace.mode:
-                trace.update(
-                    line=dict(width=3, color=PRIMARY),
-                    fill='tozeroy',
-                    fillcolor=ACCENT + "55"
-                )
-            elif trace.type == 'scatter':
-                # Untuk scatter lain, hanya line & marker
-                trace.update(line=dict(width=3, color=PRIMARY))
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=[1,2,3],
+            y=[4,5,6],
+            mode='lines+markers',  # <- wajib ada 'lines' supaya fill/tozeroy bisa
+            line=dict(color=PRIMARY, width=3),
+            marker=dict(size=8),
+            fill='tozeroy',
+            fillcolor=ACCENT + "55"
+        ))
 
         fig.update_layout(
             yaxis=dict(showgrid=True, gridwidth=0.3),
