@@ -106,28 +106,172 @@ st.markdown(f"**Wilayah terpilih:** {selected_station} | **Polutan:** {selected_
 st.markdown("---")
 
 # ========================
-# SECTION 1: TOP METRICS
+# SECTION 1: TOP METRICS (Modern Card Style)
 # ========================
-col1, col2, col3, col4 = st.columns([1,1,1,1])
+
+# Calculate AQI based on PM2.5 (simplified US EPA standard)
+def calculate_aqi(pm25):
+    if pd.isna(pm25):
+        return 0
+    if pm25 <= 12.0:
+        return int((50/12.0) * pm25)
+    elif pm25 <= 35.4:
+        return int(50 + ((100-50)/(35.4-12.0)) * (pm25-12.0))
+    elif pm25 <= 55.4:
+        return int(100 + ((150-100)/(55.4-35.4)) * (pm25-35.4))
+    elif pm25 <= 150.4:
+        return int(150 + ((200-150)/(150.4-55.4)) * (pm25-55.4))
+    elif pm25 <= 250.4:
+        return int(200 + ((300-200)/(250.4-150.4)) * (pm25-150.4))
+    else:
+        return int(300 + ((500-300)/(500.4-250.4)) * (pm25-250.4))
+
+def get_aqi_status(aqi):
+    if aqi <= 50:
+        return "BAIK", "#28a745"
+    elif aqi <= 100:
+        return "SEDANG", "#ffc107"
+    elif aqi <= 150:
+        return "TIDAK SEHAT (SENSITIF)", "#fd7e14"
+    elif aqi <= 200:
+        return "TIDAK SEHAT", "#dc3545"
+    elif aqi <= 300:
+        return "SANGAT TIDAK SEHAT", "#6f42c1"
+    else:
+        return "BERBAHAYA", "#8b0000"
+
+# Calculate current values
+if "PM2.5" in df_filtered.columns and len(df_filtered) > 0:
+    current_pm25 = df_filtered["PM2.5"].mean()
+    current_aqi = calculate_aqi(current_pm25)
+    status_text, status_color = get_aqi_status(current_aqi)
+    
+    # Calculate change (compare current period with previous period of same length)
+    period_length = (end_date - start_date).days
+    prev_start = start_date - pd.Timedelta(days=period_length)
+    prev_end = start_date
+    
+    df_prev = df[(df["date"] >= prev_start) & (df["date"] < prev_end)]
+    if selected_station != "Semua Wilayah":
+        df_prev = df_prev[df_prev["station"] == selected_station]
+    
+    if len(df_prev) > 0:
+        prev_aqi = calculate_aqi(df_prev["PM2.5"].mean())
+        aqi_change = ((current_aqi - prev_aqi) / prev_aqi * 100) if prev_aqi > 0 else 0
+    else:
+        aqi_change = 0
+else:
+    current_pm25 = 0
+    current_aqi = 0
+    status_text = "N/A"
+    status_color = "#6c757d"
+    aqi_change = 0
+
+# Get other metrics
+if "PM10" in df_filtered.columns:
+    current_pm10 = df_filtered["PM10"].mean()
+    if len(df_prev) > 0 and "PM10" in df_prev.columns:
+        pm10_change = ((current_pm10 - df_prev["PM10"].mean()) / df_prev["PM10"].mean() * 100)
+    else:
+        pm10_change = 0
+else:
+    current_pm10 = 0
+    pm10_change = 0
+
+if "TEMP" in df_filtered.columns:
+    current_temp = df_filtered["TEMP"].mean()
+    if len(df_prev) > 0 and "TEMP" in df_prev.columns:
+        temp_change = ((current_temp - df_prev["TEMP"].mean()) / df_prev["TEMP"].mean() * 100)
+    else:
+        temp_change = 0
+else:
+    current_temp = 0
+    temp_change = 0
+
+if "DEWP" in df_filtered.columns:
+    current_humidity = df_filtered["DEWP"].mean()
+    if len(df_prev) > 0 and "DEWP" in df_prev.columns:
+        humidity_change = ((current_humidity - df_prev["DEWP"].mean()) / df_prev["DEWP"].mean() * 100)
+    else:
+        humidity_change = 0
+else:
+    current_humidity = 0
+    humidity_change = 0
+
+# Display modern metrics cards
+col1, col2 = st.columns([1, 1])
+
 with col1:
-    st.metric("📊 Total Data", f"{len(df_filtered):,}")
+    st.markdown(f"""
+    <div style='background-color: #f8f9fa; padding: 30px; border-radius: 10px; border-left: 5px solid {status_color}'>
+        <p style='color: #6c757d; font-size: 14px; margin: 0;'>Indeks Kualitas Udara (AQI)</p>
+        <h1 style='font-size: 56px; margin: 10px 0; font-weight: bold;'>{current_aqi}</h1>
+        <p style='color: {"#dc3545" if aqi_change > 0 else "#28a745"}; font-size: 16px; margin: 0;'>
+            {"↓" if aqi_change < 0 else "↑"} {abs(aqi_change):.2f}%
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
 with col2:
-    if selected_pollutant and selected_pollutant in df_filtered.columns:
-        avg_val = df_filtered[selected_pollutant].mean()
-        st.metric(f"🌫️ Rata-rata {selected_pollutant}", f"{avg_val:.2f} µg/m³")
-    else:
-        st.metric("Rata-rata", "N/A")
+    st.markdown(f"""
+    <div style='background-color: {status_color}; padding: 30px; border-radius: 10px;'>
+        <p style='color: white; font-size: 14px; margin: 0; opacity: 0.9;'>Status Kualitas Udara:</p>
+        <h1 style='color: white; font-size: 42px; margin: 10px 0; font-weight: bold;'>{status_text}</h1>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Second row of metrics
+col3, col4, col5, col6 = st.columns(4)
+
 with col3:
-    if "TEMP" in df_filtered.columns:
-        st.metric("🌡️ Rata-rata Suhu", f"{df_filtered['TEMP'].mean():.1f} °C")
-    else:
-        st.metric("Suhu", "N/A")
+    change_color = "#dc3545" if aqi_change > 0 else "#28a745"
+    st.markdown(f"""
+    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+        <p style='color: #6c757d; font-size: 13px; margin: 0;'>Tingkat PM2.5</p>
+        <h2 style='font-size: 32px; margin: 10px 0;'>{current_pm25:.2f} <span style='font-size: 16px;'>µg/m³</span></h2>
+        <p style='color: {change_color}; font-size: 14px; margin: 0;'>
+            {"↓" if aqi_change < 0 else "↑"} {abs(aqi_change):.2f}%
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
 with col4:
-    if "air_quality_category" in df_filtered.columns and len(df_filtered)>0:
-        dom_cat = df_filtered["air_quality_category"].mode().iloc[0]
-        st.metric("🏷️ Kategori Dominan", dom_cat)
-    else:
-        st.metric("Kategori", "N/A")
+    pm10_color = "#dc3545" if pm10_change > 0 else "#28a745"
+    st.markdown(f"""
+    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+        <p style='color: #6c757d; font-size: 13px; margin: 0;'>Tingkat PM10</p>
+        <h2 style='font-size: 32px; margin: 10px 0;'>{current_pm10:.2f} <span style='font-size: 16px;'>µg/m³</span></h2>
+        <p style='color: {pm10_color}; font-size: 14px; margin: 0;'>
+            {"↓" if pm10_change < 0 else "↑"} {abs(pm10_change):.2f}%
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col5:
+    temp_color = "#dc3545" if temp_change > 0 else "#2b8fd6"
+    st.markdown(f"""
+    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+        <p style='color: #6c757d; font-size: 13px; margin: 0;'>Suhu</p>
+        <h2 style='font-size: 32px; margin: 10px 0;'>{current_temp:.0f}<span style='font-size: 20px;'>°C</span></h2>
+        <p style='color: {temp_color}; font-size: 14px; margin: 0;'>
+            {"↓" if temp_change < 0 else "↑"} {abs(temp_change):.2f}%
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col6:
+    humidity_color = "#2b8fd6" if humidity_change > 0 else "#dc3545"
+    st.markdown(f"""
+    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+        <p style='color: #6c757d; font-size: 13px; margin: 0;'>Kelembaban</p>
+        <h2 style='font-size: 32px; margin: 10px 0;'>{current_humidity:.2f}<span style='font-size: 16px;'>%</span></h2>
+        <p style='color: {humidity_color}; font-size: 14px; margin: 0;'>
+            {"↓" if humidity_change < 0 else "↑"} {abs(humidity_change):.2f}%
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
 
