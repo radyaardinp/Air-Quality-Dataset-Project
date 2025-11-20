@@ -313,7 +313,7 @@ with col_a:
         wind_data = wind_data[wind_data["WSPM"] >= 0]
         
         if len(wind_data) > 50:  # Need enough data points for windrose
-             wind_data['wd_bin'] = (wind_data['wd_degrees'] // 22.5) * 22.5
+            wind_data['wd_bin'] = (wind_data['wd_degrees'] // 22.5) * 22.5
 
             rose_df = wind_data.groupby('wd_bin')['WSPM'].mean().reset_index()
             rose_df = rose_df.dropna()
