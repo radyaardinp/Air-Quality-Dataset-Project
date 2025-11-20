@@ -117,7 +117,7 @@ def get_aqi_status(aqi):
         return "BERBAHAYA", "#8b0000"
 
 # Calculate current values
-df_curr = df_filtered.copy()
+df_curr = df.copy()
 
 def safe_mean(series):
     return series.mean() if len(series) > 0 else 0
