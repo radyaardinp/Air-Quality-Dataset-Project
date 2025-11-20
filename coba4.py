@@ -102,7 +102,6 @@ if selected_station != "Semua Wilayah":
 # Page Layout
 # -------------------------
 st.title("🌍 Air Quality Dashboard — Beijing 2013-2017")
-st.markdown(f"**Wilayah terpilih:** {selected_station} | **Polutan:** {selected_pollutant}")
 st.markdown("---")
 
 # ========================
