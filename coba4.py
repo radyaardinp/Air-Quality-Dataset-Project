@@ -281,13 +281,11 @@ st.markdown("---")
 # ========================
 # SECTION 2: RINGKASAN VISUALISASI
 # ========================
-st.header("📈 Ringkasan Visualisasi")
-
 # Row 1: Windrose & Air Quality Category
 col_a, col_b = st.columns([1, 1])
 
 with col_a:
-    st.subheader("🌬️ Wind Rose - Arah Datangnya Polusi")
+    st.subheader("🌬️Visualisasi Arah Datangnya Polusi")
     
     # Check if wind direction and speed columns exist
     if "wd" in df_filtered.columns and "WSPM" in df_filtered.columns:
@@ -316,7 +314,7 @@ with col_a:
         
         if len(wind_data) > 50:  # Need enough data points for windrose
             try:
-                fig = plt.figure(figsize=(6, 6))
+                fig = px.figure(figsize=(6, 6))
                 ax = WindroseAxes.from_ax(fig=fig)
                 ax.bar(
                     wind_data["wd_degrees"].values, 
@@ -324,7 +322,7 @@ with col_a:
                     normed=True, 
                     opening=0.8, 
                     edgecolor='white',
-                    cmap=plt.cm.viridis,
+                    cmap=px.cm.viridis,
                     bins=6
                 )
                 ax.set_legend(title="Kecepatan Angin (m/s)", loc='upper left', bbox_to_anchor=(1.1, 1))
@@ -332,7 +330,7 @@ with col_a:
             except Exception as e:
                 st.warning(f"Tidak dapat membuat wind rose chart. Menampilkan distribusi arah angin sebagai gantinya.")
                 # Fallback: show wind direction distribution as polar bar chart
-                fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(projection='polar'))
+                fig, ax = px.subplots(figsize=(6, 6), subplot_kw=dict(projection='polar'))
                 
                 # Count frequency of each direction
                 direction_counts = df_filtered["wd"].value_counts()
@@ -350,7 +348,7 @@ with col_a:
                     
                     # Color bars based on frequency
                     max_count = max(counts) if counts else 1
-                    colors = plt.cm.viridis(np.array(counts) / max_count)
+                    colors = px.cm.viridis(np.array(counts) / max_count)
                     for bar, color in zip(bars, colors):
                         bar.set_facecolor(color)
                     
@@ -381,7 +379,7 @@ with col_b:
         }
         colors = [color_map.get(cat, "#6c757d") for cat in cat_counts.index]
         
-        fig, ax = plt.subplots(figsize=(6, 6))
+        fig, ax = px.subplots(figsize=(6, 6))
         ax.pie(
             cat_counts.values, 
             labels=cat_counts.index, 
@@ -404,7 +402,7 @@ if "season" in df_filtered.columns and "PM2.5" in df_filtered.columns:
         # Show comparison across all regions
         season_region = df_filtered.groupby(['season', 'station'])['PM2.5'].mean().reset_index()
         
-        fig, ax = plt.subplots(figsize=(12, 5))
+        fig, ax = px.subplots(figsize=(12, 5))
         sns.barplot(
             data=season_region, 
             x='season', 
@@ -423,7 +421,7 @@ if "season" in df_filtered.columns and "PM2.5" in df_filtered.columns:
         # Show single region seasonal trend
         season_data = df_filtered.groupby('season')['PM2.5'].mean().sort_values(ascending=False)
         
-        fig, ax = plt.subplots(figsize=(10, 5))
+        fig, ax = px.subplots(figsize=(10, 5))
         bars = ax.bar(season_data.index, season_data.values, color=ACCENT, edgecolor='black', linewidth=1.2)
         
         # Highlight worst season
@@ -466,7 +464,7 @@ if 'year' in df_filtered.columns and selected_pollutant in df_filtered.columns:
         # Compare all regions
         yearly_region = df_filtered.groupby(['year', 'station'])[selected_pollutant].mean().reset_index()
         
-        fig, ax = plt.subplots(figsize=(12, 5))
+        fig, ax = px.subplots(figsize=(12, 5))
         for station in yearly_region['station'].unique():
             station_data = yearly_region[yearly_region['station'] == station]
             ax.plot(station_data['year'], station_data[selected_pollutant], 
@@ -482,7 +480,7 @@ if 'year' in df_filtered.columns and selected_pollutant in df_filtered.columns:
         # Single region
         trend_df = df_filtered.groupby('year')[selected_pollutant].mean().reset_index()
         
-        fig, ax = plt.subplots(figsize=(10, 4))
+        fig, ax = px.subplots(figsize=(10, 4))
         ax.plot(trend_df['year'], trend_df[selected_pollutant], 
                marker='o', linewidth=2.5, color=PRIMARY, markersize=8)
         ax.fill_between(trend_df['year'], trend_df[selected_pollutant], alpha=0.3, color=ACCENT)
@@ -510,7 +508,7 @@ weather_cols = [c for c in ['TEMP','PRES','DEWP','RAIN','WSPM'] if c in df_filte
 if selected_pollutant in df_filtered.columns and len(weather_cols) > 0:
     corr_df = df_filtered[[selected_pollutant] + weather_cols].corr()
     
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = px.subplots(figsize=(8, 6))
     sns.heatmap(corr_df, annot=True, fmt='.2f', ax=ax, 
                cmap='coolwarm', cbar_kws={'label':'Koefisien Korelasi'},
                linewidths=0.5, linecolor='white')
@@ -542,7 +540,7 @@ if selected_pollutant in df_filtered.columns:
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = px.subplots(figsize=(10, 6))
             bars = sns.barplot(data=region_avg, x=selected_pollutant, y='station', 
                              palette='RdYlGn_r', ax=ax, edgecolor='black', linewidth=1)
             ax.set_xlabel(f'Rata-rata {selected_pollutant} (µg/m³)', fontsize=12)
@@ -587,7 +585,7 @@ if 'hour' in df_filtered.columns and selected_pollutant in df_filtered.columns:
         # Show all regions comparison
         hourly_region = df_filtered.groupby(['hour', 'station'])[selected_pollutant].mean().reset_index()
         
-        fig, ax = plt.subplots(figsize=(12, 5))
+        fig, ax = px.subplots(figsize=(12, 5))
         for station in hourly_region['station'].unique():
             station_data = hourly_region[hourly_region['station'] == station]
             ax.plot(station_data['hour'], station_data[selected_pollutant], 
@@ -604,7 +602,7 @@ if 'hour' in df_filtered.columns and selected_pollutant in df_filtered.columns:
         # Single region
         hourly = df_filtered.groupby('hour')[selected_pollutant].mean().reset_index()
         
-        fig, ax = plt.subplots(figsize=(12, 5))
+        fig, ax = px.subplots(figsize=(12, 5))
         ax.fill_between(hourly['hour'], hourly[selected_pollutant], alpha=0.3, color=ACCENT)
         ax.plot(hourly['hour'], hourly[selected_pollutant], 
                marker='o', linewidth=2.5, color=PRIMARY, markersize=6)
