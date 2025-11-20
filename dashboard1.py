@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="Air Quality Dashboard",
     layout="wide"
 )
-sns.set(style='dark')
+sns.set(style='light')
 
 # Menambahkan background
 background_style = """
@@ -112,33 +112,6 @@ if selected_station != "Semua Wilayah":
 # Filter Jenis Polutan
 pollutants = ["PM2.5", "PM10", "SO2", "NO2", "CO", "O3"]
 selected_pollutant = st.sidebar.selectbox("🌫️ Pilih Polutan untuk Analisis Detail", pollutants)
-
-# Filter Rentang Temperatur
-temp_range = st.sidebar.slider(
-    "🌡️ Rentang Temperatur (°C)",
-    float(df["TEMP"].min()),
-    float(df["TEMP"].max()),
-    (float(df["TEMP"].min()), float(df["TEMP"].max()))
-)
-df_filtered = df_filtered[(df_filtered["TEMP"] >= temp_range[0]) & 
-                         (df_filtered["TEMP"] <= temp_range[1])]
-
-# Filter Rentang Tekanan Udara
-pres_range = st.sidebar.slider(
-    "📊 Rentang Tekanan Udara (hPa)",
-    float(df["PRES"].min()),
-    float(df["PRES"].max()),
-    (float(df["PRES"].min()), float(df["PRES"].max()))
-)
-df_filtered = df_filtered[(df_filtered["PRES"] >= pres_range[0]) & 
-                         (df_filtered["PRES"] <= pres_range[1])]
-
-# Filter Musim
-seasons = ["Semua Musim"] + sorted(df_filtered["season"].unique().tolist())
-selected_season = st.sidebar.selectbox("🍂 Pilih Musim", seasons)
-
-if selected_season != "Semua Musim":
-    df_filtered = df_filtered[df_filtered["season"] == selected_season]
 
 # Tampilkan info filter
 st.sidebar.markdown("---")
@@ -337,7 +310,9 @@ df_region_avg = df_filtered.groupby("station")[pollutants].mean().reset_index()
 st.dataframe(df_region_avg.style.format({col: "{:.2f}" for col in pollutants}), use_container_width=True)
 
 fig, ax = plt.subplots(figsize=(12, 6))
-df_region_avg.set_index("station")[pollutants].plot(kind="bar", ax=ax, colormap="viridis")
+df_region_avg.set_index(x="station",
+    y=selected_pollutant,
+    kind="bar")
 ax.set_title("Rata-rata Polutan per Wilayah", fontsize=14, fontweight='bold')
 ax.set_ylabel("Konsentrasi Polutan (µg/m³)", fontsize=12)
 ax.set_xlabel("Wilayah", fontsize=12)
