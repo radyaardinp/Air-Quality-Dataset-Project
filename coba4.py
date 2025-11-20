@@ -296,8 +296,7 @@ with col_a:
                 'N': 0, 'NNE': 22.5, 'NE': 45, 'ENE': 67.5,
                 'E': 90, 'ESE': 112.5, 'SE': 135, 'SSE': 157.5,
                 'S': 180, 'SSW': 202.5, 'SW': 225, 'WSW': 247.5,
-                'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5
-            }
+                'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5}
             if pd.isna(wd_str):
                 return np.nan
             return direction_map.get(str(wd_str).strip().upper(), np.nan)
@@ -323,35 +322,32 @@ with col_a:
                 theta="wd_bin",
                 color="WSPM",
                 color_continuous_scale=px.colors.sequential.Viridis,
-                title="Wind Rose (Arah & Kecepatan Angin)"
-            )
+                title="Wind Rose (Arah & Kecepatan Angin)")
         
             fig.update_layout(
                 polar=dict(
                     angularaxis=dict(direction="counterclockwise",
                                      rotation=90),
-                    radialaxis=dict(showticklabels=True)
-                )
-            )
+                    radialaxis=dict(showticklabels=True)))
         
             st.plotly_chart(fig, use_container_width=True)
                 
-                if len(theta) > 0:
-                    width = np.deg2rad(22.5)
-                    bars = ax.bar(theta, counts, width=width, bottom=0.0, alpha=0.7)
+            if len(theta) > 0:
+                width = np.deg2rad(22.5)
+                bars = ax.bar(theta, counts, width=width, bottom=0.0, alpha=0.7)
                     
-                    # Color bars based on frequency
-                    max_count = max(counts) if counts else 1
-                    colors = px.cm.viridis(np.array(counts) / max_count)
-                    for bar, color in zip(bars, colors):
-                        bar.set_facecolor(color)
+                # Color bars based on frequency                
+                max_count = max(counts) if counts else 1
+                colors = px.cm.viridis(np.array(counts) / max_count)
+                for bar, color in zip(bars, colors):
+                    bar.set_facecolor(color)
                     
-                    ax.set_theta_zero_location('N')
-                    ax.set_theta_direction(-1)
-                    ax.set_title('Distribusi Arah Angin', pad=20)
-                    st.pyplot(fig)
-                else:
-                    st.info("Data arah angin tidak valid.")
+                ax.set_theta_zero_location('N')
+                ax.set_theta_direction(-1)
+                ax.set_title('Distribusi Arah Angin', pad=20)
+                st.pyplot(fig)
+            else:
+                st.info("Data arah angin tidak valid.")
         else:
             st.info("Data arah angin tidak cukup untuk periode ini (minimal 50 data point diperlukan).")
     else:
