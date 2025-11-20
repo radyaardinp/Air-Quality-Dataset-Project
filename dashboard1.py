@@ -8,7 +8,7 @@ from io import BytesIO
 # -------------------------
 # Config & Theme
 # -------------------------
-st.set_page_config(page_title="Air Quality Dashboard - Single Page", layout="wide")
+st.set_page_config(page_title="Air Quality Dashboard", layout="wide")
 sns.set_theme(style="whitegrid")
 
 # Colors (dark gray + blue accents)
@@ -16,13 +16,6 @@ PRIMARY = "#1f3b64"     # dark blue
 SECONDARY = "#4b4f54"   # dark gray
 ACCENT = "#2b8fd6"      # bright blue
 
-# -------------------------
-# Notebook path (user-uploaded)
-# -------------------------
-NOTEBOOK_PATH = "/mnt/data/Air Quality Analysis in Beijing.ipynb"
-
-# -------------------------
-# Helpers
 # -------------------------
 @st.cache_data
 def load_data(path="main_data.csv"):
@@ -157,7 +150,7 @@ if selected_station != "Semua Wilayah":
 # -------------------------
 # Page Layout
 # -------------------------
-st.title("Air Quality Dashboard — Beijing (Single Page)")
+st.title("Air Quality Dashboard — Beijing 2013-2017")
 st.markdown("---")
 
 # Top metrics + insights headline
@@ -179,11 +172,10 @@ with col4:
 
 st.markdown("---")
 
-# 1) EDA insights per wilayah (station)
-st.header("Insight EDA per Wilayah")
+# 1) EDA insights per wilayah
 st.write("Pilih stasiun untuk melihat insight ringkas yang dihasilkan dari EDA (trend, musim terburuk, jam terburuk, korelasi kuat).")
 
-station_for_insight = st.selectbox("Pilih Stasiun untuk Insight", stations, index=stations.index(selected_station))
+station_for_insight = st.selectbox("Pilih Stasiun", stations, index=stations.index(selected_station))
 ins = summarize_station_insights(df, station_for_insight)
 
 if ins is None:
@@ -292,12 +284,7 @@ else:
 
 st.markdown("---")
 
-# Footer: link to original notebook and quick download
-st.markdown("### Referensi dan file sumber")
-st.markdown(f"- Notebook analisis (asli): `{NOTEBOOK_PATH}`")
-st.markdown("- Jika ingin men-download notebook, gunakan file manager pada environment Anda atau hubungkan workspace.")
-
-st.caption("Made by Radya Ardi — Single Page Dashboard")
+st.caption("Made by Radya Ardi")
 
 # -------------------------
 # End
