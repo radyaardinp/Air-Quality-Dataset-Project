@@ -202,7 +202,15 @@ else:
             st.markdown(f"- **Korelasi terkuat dengan PM2.5:** {var} (|r| = {val:.2f})")
     with colB:
         st.subheader("Statistik Singkat")
-        st.write(df[df['station']==station_for_insight].describe().T[['count','mean','std']].style.format('{:.2f}'))
+        desc = (
+            df[df['station'] == station_for_insight]
+            .select_dtypes(include='number')
+            .describe()
+            .T[['count','mean','std']]
+            .apply(lambda x: x.round(2))
+        )
+
+        st.dataframe(desc)
 
 st.markdown("---")
 
