@@ -229,7 +229,7 @@ st.markdown("---")
 # ========================
 # Row 1: Windrose & Air Quality Category
 st.subheader("Pilih Wilayah")
-selected_station = st.selectbox("Pilih Stasiun (Wilayah)", stations)
+selected_station = st.selectbox("Pilih Stasiun (Wilayah)", station)
 
 col_a, col_b = st.columns([1, 1])
 with col_a:
