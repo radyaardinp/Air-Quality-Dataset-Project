@@ -303,19 +303,15 @@ with col_a:
         
         # Prepare wind data
         wind_data = df_filtered[["wd", "WSPM"]].copy()
-        
-        # Convert wind direction to degrees
         wind_data["wd_degrees"] = wind_data["wd"].apply(wind_direction_to_degrees)
-        
-        # Remove NaN values and filter valid data
         wind_data = wind_data.dropna()
         wind_data = wind_data[wind_data["WSPM"] >= 0]
         
         if len(wind_data) > 50:  # Need enough data points for windrose
             wind_data['wd_bin'] = (wind_data['wd_degrees'] // 22.5) * 22.5
 
-            rose_df = wind_data.groupby('wd_bin')['WSPM'].mean().reset_index()
-            rose_df = rose_df.dropna()
+            rose_df = wind_data.groupby('wd_bin')['WSPM'].mean().reset_index().dropna()
+            
             fig = px.bar_polar(
                 rose_df,
                 r="WSPM",
@@ -326,30 +322,37 @@ with col_a:
         
             fig.update_layout(
                 polar=dict(
-                    angularaxis=dict(direction="counterclockwise",
-                                     rotation=90),
+                    angularaxis=dict(direction="counterclockwise", rotation=90),
                     radialaxis=dict(showticklabels=True)))
         
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Data arah angin tidak cukup untuk wind rose (min 50 data point). Menampilkan distribusi arah angin.")
+        
+            direction_counts = df_filtered["wd"].value_counts().reset_index()
+            direction_counts.columns = ["direction", "count"]
+            direction_counts["deg"] = direction_counts["direction"].apply(wind_direction_to_degrees)
+            direction_counts = direction_counts.dropna().sort_values("deg")
+            
                 
-            if len(theta) > 0:
-                width = np.deg2rad(22.5)
-                bars = ax.bar(theta, counts, width=width, bottom=0.0, alpha=0.7)
-                    
-                # Color bars based on frequency                
-                max_count = max(counts) if counts else 1
-                colors = px.cm.viridis(np.array(counts) / max_count)
-                for bar, color in zip(bars, colors):
-                    bar.set_facecolor(color)
-                    
-                ax.set_theta_zero_location('N')
-                ax.set_theta_direction(-1)
-                ax.set_title('Distribusi Arah Angin', pad=20)
-                st.pyplot(fig)
+            if len(direction_counts) > 0:
+                fig2 = px.bar_polar(
+                    direction_counts,
+                    r="count",
+                    theta="direction",
+                    color="count",
+                    color_continuous_scale=px.colors.sequential.Plasma,
+                    title="Distribusi Arah Angin"
+                )
+                fig2.update_layout(
+                    polar=dict(
+                        angularaxis=dict(direction="counterclockwise", rotation=90),
+                        radialaxis=dict(showticklabels=True)
+                    )
+                )
+                st.plotly_chart(fig2, use_container_width=True)
             else:
                 st.info("Data arah angin tidak valid.")
-        else:
-            st.info("Data arah angin tidak cukup untuk periode ini (minimal 50 data point diperlukan).")
     else:
         st.info("Kolom 'wd' (wind direction) atau 'WSPM' tidak tersedia dalam data.")
 
