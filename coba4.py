@@ -76,29 +76,6 @@ except FileNotFoundError:
     st.stop()
 
 # -------------------------
-# Sidebar filters
-# -------------------------
-st.sidebar.title("🔍 Filter")
-min_date = df["date"].min()
-max_date = df["date"].max()
-
-date_range = st.sidebar.date_input(
-    "Rentang Tanggal", 
-    value=(min_date, max_date), 
-    min_value=min_date, 
-    max_value=max_date
-)
-
-stations = ["Semua Wilayah"] + sorted(df["station"].unique().tolist())
-selected_station = st.sidebar.selectbox("Pilih Stasiun (Wilayah)", stations)
-
-# Apply filters
-start_date, end_date = pd.Timestamp(date_range[0]), pd.Timestamp(date_range[1])
-df_filtered = df[(df["date"] >= start_date) & (df["date"] <= end_date)].copy()
-if selected_station != "Semua Wilayah":
-    df_filtered = df_filtered[df_filtered["station"] == selected_station]
-
-# -------------------------
 # Page Layout
 # -------------------------
 st.title("🌍 Air Quality Dashboard — Beijing 2013-2017")
@@ -202,10 +179,10 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     st.markdown(f"""
-    <div style='background-color: #f8f9fa; padding: 30px; border-radius: 10px; border-left: 5px solid {status_color}'>
-        <p style='color: #6c757d; font-size: 14px; margin: 0;'>Indeks Kualitas Udara (AQI)</p>
-        <h1 style='font-size: 56px; margin: 10px 0; font-weight: bold;'>{current_aqi}</h1>
-        <p style='color: {"#dc3545" if aqi_change > 0 else "#28a745"}; font-size: 16px; margin: 0;'>
+    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 15px; border-left: 5px solid {status_color}'>
+        <p style='color: #6c757d; font-size: 12px; margin: 0;'>Indeks Kualitas Udara (AQI)</p>
+        <h1 style='font-size: 40px; margin: 10px 0; font-weight: bold;'>{current_aqi}</h1>
+        <p style='color: {"#dc3545" if aqi_change > 0 else "#28a745"}; font-size: 14px; margin: 0;'>
             {"↓" if aqi_change < 0 else "↑"} {abs(aqi_change):.2f}%
         </p>
     </div>
@@ -213,9 +190,9 @@ with col1:
 
 with col2:
     st.markdown(f"""
-    <div style='background-color: {status_color}; padding: 30px; border-radius: 10px;'>
-        <p style='color: white; font-size: 14px; margin: 0; opacity: 0.9;'>Status Kualitas Udara:</p>
-        <h1 style='color: white; font-size: 42px; margin: 10px 0; font-weight: bold;'>{status_text}</h1>
+    <div style='background-color: {status_color}; padding: 20px; border-radius: 15px;'>
+        <p style='color: white; font-size: 12px; margin: 0; opacity: 0.9;'>Status Kualitas Udara:</p>
+        <h1 style='color: white; font-size: 40px; margin: 10px 0; font-weight: bold;'>{status_text}</h1>
     </div>
     """, unsafe_allow_html=True)
 
@@ -227,7 +204,7 @@ col3, col4, col5, col6 = st.columns(4)
 with col3:
     change_color = "#dc3545" if aqi_change > 0 else "#28a745"
     st.markdown(f"""
-    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+    <div style='background-color: #f8f9fa; padding: 10px; border-radius: 10px;'>
         <p style='color: #6c757d; font-size: 13px; margin: 0;'>Tingkat PM2.5</p>
         <h2 style='font-size: 32px; margin: 10px 0;'>{current_pm25:.2f} <span style='font-size: 16px;'>µg/m³</span></h2>
         <p style='color: {change_color}; font-size: 14px; margin: 0;'>
@@ -239,7 +216,7 @@ with col3:
 with col4:
     pm10_color = "#dc3545" if pm10_change > 0 else "#28a745"
     st.markdown(f"""
-    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+    <div style='background-color: #f8f9fa; padding: 10px; border-radius: 10px;'>
         <p style='color: #6c757d; font-size: 13px; margin: 0;'>Tingkat PM10</p>
         <h2 style='font-size: 32px; margin: 10px 0;'>{current_pm10:.2f} <span style='font-size: 16px;'>µg/m³</span></h2>
         <p style='color: {pm10_color}; font-size: 14px; margin: 0;'>
@@ -251,7 +228,7 @@ with col4:
 with col5:
     temp_color = "#dc3545" if temp_change > 0 else "#2b8fd6"
     st.markdown(f"""
-    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+    <div style='background-color: #f8f9fa; padding: 10px; border-radius: 10px;'>
         <p style='color: #6c757d; font-size: 13px; margin: 0;'>Suhu</p>
         <h2 style='font-size: 32px; margin: 10px 0;'>{current_temp:.0f}<span style='font-size: 20px;'>°C</span></h2>
         <p style='color: {temp_color}; font-size: 14px; margin: 0;'>
@@ -263,7 +240,7 @@ with col5:
 with col6:
     humidity_color = "#2b8fd6" if humidity_change > 0 else "#dc3545"
     st.markdown(f"""
-    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+    <div style='background-color: #f8f9fa; padding: 10px; border-radius: 10px;'>
         <p style='color: #6c757d; font-size: 13px; margin: 0;'>Kelembaban</p>
         <h2 style='font-size: 32px; margin: 10px 0;'>{current_humidity:.2f}<span style='font-size: 16px;'>%</span></h2>
         <p style='color: {humidity_color}; font-size: 14px; margin: 0;'>
@@ -278,8 +255,10 @@ st.markdown("---")
 # SECTION 2: RINGKASAN VISUALISASI
 # ========================
 # Row 1: Windrose & Air Quality Category
-col_a, col_b = st.columns([1, 1])
+stations = ["Semua Wilayah"] + sorted(df["station"].unique().tolist())
+selected_station = st.sidebar.selectbox("Pilih Stasiun (Wilayah)", stations)
 
+col_a, col_b = st.columns([1, 1])
 with col_a:
     st.subheader("🌬️Visualisasi Arah Datangnya Polusi")
     
