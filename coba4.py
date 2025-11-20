@@ -313,34 +313,28 @@ with col_a:
         wind_data = wind_data[wind_data["WSPM"] >= 0]
         
         if len(wind_data) > 50:  # Need enough data points for windrose
-            try:
-                fig = px.figure(figsize=(6, 6))
-                ax = WindroseAxes.from_ax(fig=fig)
-                ax.bar(
-                    wind_data["wd_degrees"].values, 
-                    wind_data["WSPM"].values, 
-                    normed=True, 
-                    opening=0.8, 
-                    edgecolor='white',
-                    cmap=px.cm.viridis,
-                    bins=6
+             wind_data['wd_bin'] = (wind_data['wd_degrees'] // 22.5) * 22.5
+
+            rose_df = wind_data.groupby('wd_bin')['WSPM'].mean().reset_index()
+            rose_df = rose_df.dropna()
+            fig = px.bar_polar(
+                rose_df,
+                r="WSPM",
+                theta="wd_bin",
+                color="WSPM",
+                color_continuous_scale=px.colors.sequential.Viridis,
+                title="Wind Rose (Arah & Kecepatan Angin)"
+            )
+        
+            fig.update_layout(
+                polar=dict(
+                    angularaxis=dict(direction="counterclockwise",
+                                     rotation=90),
+                    radialaxis=dict(showticklabels=True)
                 )
-                ax.set_legend(title="Kecepatan Angin (m/s)", loc='upper left', bbox_to_anchor=(1.1, 1))
-                st.pyplot(fig)
-            except Exception as e:
-                st.warning(f"Tidak dapat membuat wind rose chart. Menampilkan distribusi arah angin sebagai gantinya.")
-                # Fallback: show wind direction distribution as polar bar chart
-                fig, ax = px.subplots(figsize=(6, 6), subplot_kw=dict(projection='polar'))
-                
-                # Count frequency of each direction
-                direction_counts = df_filtered["wd"].value_counts()
-                
-                # Map to degrees and sort
-                direction_degrees = {d: wind_direction_to_degrees(d) for d in direction_counts.index}
-                sorted_dirs = sorted(direction_degrees.items(), key=lambda x: x[1] if not pd.isna(x[1]) else 999)
-                
-                theta = [np.deg2rad(deg) for _, deg in sorted_dirs if not pd.isna(deg)]
-                counts = [direction_counts[dir_name] for dir_name, deg in sorted_dirs if not pd.isna(deg)]
+            )
+        
+            st.plotly_chart(fig, use_container_width=True)
                 
                 if len(theta) > 0:
                     width = np.deg2rad(22.5)
@@ -379,16 +373,19 @@ with col_b:
         }
         colors = [color_map.get(cat, "#6c757d") for cat in cat_counts.index]
         
-        fig, ax = px.subplots(figsize=(6, 6))
-        ax.pie(
-            cat_counts.values, 
-            labels=cat_counts.index, 
-            autopct='%1.1f%%',
-            colors=colors,
-            startangle=90
+        fig = px.pie(
+            names=cat_counts.index,
+            values=cat_counts.values,
+            color=cat_counts.index,
+            color_discrete_map=color_map,
+            title=f"Proporsi Kategori Kualitas Udara<br><sup>Total: {len(df_filtered):,} data</sup>",
+            hole=0  # Bisa diubah ke 0.4 kalau mau donut chart
         )
-        ax.set_title(f"Proporsi Kategori Kualitas Udara\n(Total: {len(df_filtered):,} data)")
-        st.pyplot(fig)
+    
+        fig.update_traces(textposition='inside', textinfo='percent+label')
+        fig.update_layout(showlegend=True)
+    
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Data kategori kualitas udara tidak tersedia.")
 
@@ -402,48 +399,63 @@ if "season" in df_filtered.columns and "PM2.5" in df_filtered.columns:
         # Show comparison across all regions
         season_region = df_filtered.groupby(['season', 'station'])['PM2.5'].mean().reset_index()
         
-        fig, ax = px.subplots(figsize=(12, 5))
-        sns.barplot(
-            data=season_region, 
-            x='season', 
-            y='PM2.5', 
-            hue='station',
-            palette='Set2',
-            ax=ax
+        fig = px.bar(
+            season_region,
+            x="season",
+            y="PM2.5",
+            color="station",
+            barmode="group",
+            title="Perbandingan PM2.5 per Musim di Semua Wilayah",
+            labels={"season": "Musim", "PM2.5": "Rata-rata PM2.5 (µg/m³)", "station": "Wilayah"},
+            color_discrete_sequence=px.colors.qualitative.Set2
         )
-        ax.set_xlabel('Musim', fontsize=12)
-        ax.set_ylabel('Rata-rata PM2.5 (µg/m³)', fontsize=12)
-        ax.set_title('Perbandingan PM2.5 per Musim di Semua Wilayah', fontsize=14, fontweight='bold')
-        ax.legend(title='Wilayah', bbox_to_anchor=(1.05, 1), loc='upper left')
-        ax.grid(axis='y', alpha=0.3)
-        st.pyplot(fig)
+
+        fig.update_layout(
+            xaxis_title="Musim",
+            yaxis_title="Rata-rata PM2.5 (µg/m³)",
+            legend_title="Wilayah",
+            bargap=0.2
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        # Show single region seasonal trend
         season_data = df_filtered.groupby('season')['PM2.5'].mean().sort_values(ascending=False)
-        
-        fig, ax = px.subplots(figsize=(10, 5))
-        bars = ax.bar(season_data.index, season_data.values, color=ACCENT, edgecolor='black', linewidth=1.2)
-        
-        # Highlight worst season
-        max_idx = season_data.values.argmax()
-        bars[max_idx].set_color('#dc3545')
-        
-        ax.set_xlabel('Musim', fontsize=12)
-        ax.set_ylabel('Rata-rata PM2.5 (µg/m³)', fontsize=12)
-        ax.set_title(f'Rata-rata PM2.5 per Musim di {selected_station}', fontsize=14, fontweight='bold')
-        ax.grid(axis='y', alpha=0.3)
-        
-        # Add value labels on bars
-        for bar in bars:
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{height:.1f}',
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
-        
-        st.pyplot(fig)
-        
+
+        fig = px.bar(
+            x=season_data.index,
+            y=season_data.values,
+            labels={"x": "Musim", "y": "Rata-rata PM2.5 (µg/m³)"},
+            title=f"Rata-rata PM2.5 per Musim di {selected_station}",
+        )
+
+        # Warna default
+        colors = [ACCENT] * len(season_data)
+        # Highlight musim terburuk (paling tinggi)
+        colors[0] = "#dc3545"
+
+        fig.update_traces(marker_color=colors)
+
+        # Tambah value label di atas bar
+        fig.update_traces(
+            text=[f"{v:.1f}" for v in season_data.values],
+            textposition="outside"
+        )
+
+        fig.update_layout(
+            yaxis_title="Rata-rata PM2.5 (µg/m³)",
+            xaxis_title="Musim",
+            uniformtext_minsize=8,
+            uniformtext_mode='show'
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
         worst_season = season_data.index[0]
-        st.markdown(f"**💡 Insight:** Musim dengan PM2.5 tertinggi di {selected_station} adalah **{worst_season}** ({season_data.iloc[0]:.2f} µg/m³)")
+        st.markdown(
+            f"**💡 Insight:** Musim dengan PM2.5 tertinggi di {selected_station} adalah "
+            f"**{worst_season}** ({season_data.iloc[0]:.2f} µg/m³)"
+        )
+
 else:
     st.info("Data musim atau PM2.5 tidak tersedia.")
 
@@ -464,36 +476,54 @@ if 'year' in df_filtered.columns and selected_pollutant in df_filtered.columns:
         # Compare all regions
         yearly_region = df_filtered.groupby(['year', 'station'])[selected_pollutant].mean().reset_index()
         
-        fig, ax = px.subplots(figsize=(12, 5))
-        for station in yearly_region['station'].unique():
-            station_data = yearly_region[yearly_region['station'] == station]
-            ax.plot(station_data['year'], station_data[selected_pollutant], 
-                   marker='o', linewidth=2, label=station)
-        
-        ax.set_xlabel('Tahun', fontsize=12)
-        ax.set_ylabel(f'{selected_pollutant} (µg/m³)', fontsize=12)
-        ax.set_title(f'Tren {selected_pollutant} per Tahun - Semua Wilayah', fontsize=14, fontweight='bold')
-        ax.legend(title='Wilayah', bbox_to_anchor=(1.05, 1), loc='upper left')
-        ax.grid(alpha=0.3)
-        st.pyplot(fig)
+        fig = px.line(
+            yearly_region,
+            x="year",
+            y=selected_pollutant,
+            color="station",
+            markers=True,
+            title=f"Tren {selected_pollutant} per Tahun - Semua Wilayah",
+            labels={
+                "year": "Tahun",
+                selected_pollutant: f"{selected_pollutant} (µg/m³)",
+                "station": "Wilayah"})
+        fig.update_layout(
+            legend_title="Wilayah",
+            hovermode="x unified",
+            yaxis=dict(showgrid=True, gridwidth=0.3) )
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        # Single region
         trend_df = df_filtered.groupby('year')[selected_pollutant].mean().reset_index()
-        
-        fig, ax = px.subplots(figsize=(10, 4))
-        ax.plot(trend_df['year'], trend_df[selected_pollutant], 
-               marker='o', linewidth=2.5, color=PRIMARY, markersize=8)
-        ax.fill_between(trend_df['year'], trend_df[selected_pollutant], alpha=0.3, color=ACCENT)
-        ax.set_xlabel('Tahun', fontsize=12)
-        ax.set_ylabel(f'{selected_pollutant} (µg/m³)', fontsize=12)
-        ax.set_title(f'Tren {selected_pollutant} di {selected_station}', fontsize=14, fontweight='bold')
-        ax.grid(alpha=0.3)
-        st.pyplot(fig)
-        
+
+        fig = px.line(
+            trend_df,
+            x="year",
+            y=selected_pollutant,
+            markers=True,
+            title=f"Tren {selected_pollutant} di {selected_station}",
+            labels={
+                "year": "Tahun",
+                selected_pollutant: f"{selected_pollutant} (µg/m³)"})
+
+        # Warna line & fill
+        fig.update_traces(
+            line=dict(width=3, color=PRIMARY),
+            marker=dict(size=8),
+            fill='tozeroy',
+            fillcolor=ACCENT + "55")
+
+        fig.update_layout(
+            yaxis=dict(showgrid=True, gridwidth=0.3),
+            hovermode="x unified")
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Kesimpulan tren
         if len(trend_df) >= 2:
             slope = np.polyfit(trend_df['year'], trend_df[selected_pollutant], 1)[0]
             verdict = 'Meningkat ⬆️' if slope > 0 else ('Menurun ⬇️' if slope < 0 else 'Stabil ➡️')
-            st.markdown(f"**💡 Kesimpulan:** Tren {selected_pollutant} di {selected_station} cenderung **{verdict}** (slope = {slope:.3f}).")
+            st.markdown(
+                f"**💡 Kesimpulan:** Tren {selected_pollutant} di {selected_station} cenderung **{verdict}** "
+                f"(slope = {slope:.3f}).")
 else:
     st.warning("Data tahun atau polutan tidak tersedia.")
 
@@ -504,25 +534,41 @@ st.markdown("---")
 # -------------------------
 st.subheader("2️⃣ Korelasi antara Polutan dan Faktor Cuaca")
 
-weather_cols = [c for c in ['TEMP','PRES','DEWP','RAIN','WSPM'] if c in df_filtered.columns]
+weather_cols = [c for c in ['TEMP','PRES','DEWP','RAIN'] if c in df_filtered.columns]
 if selected_pollutant in df_filtered.columns and len(weather_cols) > 0:
     corr_df = df_filtered[[selected_pollutant] + weather_cols].corr()
     
-    fig, ax = px.subplots(figsize=(8, 6))
-    sns.heatmap(corr_df, annot=True, fmt='.2f', ax=ax, 
-               cmap='coolwarm', cbar_kws={'label':'Koefisien Korelasi'},
-               linewidths=0.5, linecolor='white')
-    ax.set_title(f'Korelasi {selected_pollutant} dengan Faktor Cuaca\n({selected_station})', 
-                fontsize=14, fontweight='bold')
-    st.pyplot(fig)
-    
-    # Find strongest correlation
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=corr_df.values,
+            x=corr_df.columns,
+            y=corr_df.index,
+            colorscale="RdBu",
+            zmin=-1,
+            zmax=1,
+            colorbar=dict(title="Koefisien Korelasi"),
+            text=np.round(corr_df.values, 2),
+            texttemplate="%{text}",
+            hovertemplate="<b>%{y}</b> vs <b>%{x}</b><br>Korelasi: %{z:.2f}<extra></extra>"))
+
+    fig.update_layout(
+        title=f"Korelasi {selected_pollutant} dengan Faktor Cuaca<br>({selected_station})",
+        xaxis_title="Variabel",
+        yaxis_title="Variabel",
+        width=750,
+        height=650)
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Kesimpulan korelasi terkuat
     corrs = corr_df[selected_pollutant].drop(selected_pollutant).abs().sort_values(ascending=False)
     if len(corrs) > 0:
         top_var = corrs.index[0]
         top_val = corr_df.loc[top_var, selected_pollutant]
         direction = "positif" if top_val > 0 else "negatif"
-        st.markdown(f"**💡 Kesimpulan:** Faktor cuaca yang paling berkaitan dengan {selected_pollutant} adalah **{top_var}** dengan korelasi **{direction}** (r = {top_val:.2f}).")
+        st.markdown(
+            f"**💡 Kesimpulan:** Faktor cuaca yang paling berkaitan dengan {selected_pollutant} "
+            f"adalah **{top_var}** dengan korelasi **{direction}** (r = {top_val:.2f}).")
 else:
     st.warning("Data cuaca atau polutan tidak tersedia.")
 
@@ -540,34 +586,43 @@ if selected_pollutant in df_filtered.columns:
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            fig, ax = px.subplots(figsize=(10, 6))
-            bars = sns.barplot(data=region_avg, x=selected_pollutant, y='station', 
-                             palette='RdYlGn_r', ax=ax, edgecolor='black', linewidth=1)
-            ax.set_xlabel(f'Rata-rata {selected_pollutant} (µg/m³)', fontsize=12)
-            ax.set_ylabel('Wilayah', fontsize=12)
-            ax.set_title(f'Perbandingan {selected_pollutant} Antar Wilayah', fontsize=14, fontweight='bold')
-            ax.grid(axis='x', alpha=0.3)
-            
-            # Add value labels
-            for i, bar in enumerate(bars.patches):
-                width = bar.get_width()
-                ax.text(width, bar.get_y() + bar.get_height()/2,
-                       f'{width:.1f}',
-                       ha='left', va='center', fontsize=10, fontweight='bold')
-            
-            st.pyplot(fig)
+            fig = px.bar(
+                region_avg,
+                x=selected_pollutant,
+                y="station",
+                orientation="h",
+                color=selected_pollutant,
+                color_continuous_scale="RdYlGn_r",
+                title=f"Perbandingan {selected_pollutant} Antar Wilayah",
+                labels={
+                    selected_pollutant: f"Rata-rata {selected_pollutant} (µg/m³)",
+                    "station": "Wilayah" })
+    
+            # Styling
+            fig.update_layout(
+                xaxis=dict(showgrid=True, gridwidth=0.3),
+                yaxis=dict(categoryorder="total descending"),
+                coloraxis_colorbar=dict(title=f"{selected_pollutant} (µg/m³)"))
+    
+            # Add labels on bars
+            fig.update_traces(
+                texttemplate="%{x:.1f}",
+                textposition="outside")
+            st.plotly_chart(fig, use_container_width=True)
         
         with col2:
             st.dataframe(
                 region_avg.style.format({selected_pollutant: '{:.2f}'})
                 .background_gradient(subset=[selected_pollutant], cmap='RdYlGn_r'),
                 use_container_width=True,
-                height=400
-            )
+                height=400)
         
         worst_region = region_avg.loc[0, 'station']
         worst_value = region_avg.loc[0, selected_pollutant]
-        st.markdown(f"**💡 Kesimpulan:** Wilayah dengan {selected_pollutant} tertinggi adalah **{worst_region}** ({worst_value:.2f} µg/m³).")
+        st.markdown(
+            f"**💡 Kesimpulan:** Wilayah dengan {selected_pollutant} tertinggi adalah "
+            f"**{worst_region}** ({worst_value:.2f} µg/m³).")
+    
     else:
         st.info(f"Anda sedang melihat data untuk **{selected_station}** saja. Pilih 'Semua Wilayah' untuk melihat perbandingan.")
 else:
@@ -585,43 +640,71 @@ if 'hour' in df_filtered.columns and selected_pollutant in df_filtered.columns:
         # Show all regions comparison
         hourly_region = df_filtered.groupby(['hour', 'station'])[selected_pollutant].mean().reset_index()
         
-        fig, ax = px.subplots(figsize=(12, 5))
-        for station in hourly_region['station'].unique():
-            station_data = hourly_region[hourly_region['station'] == station]
-            ax.plot(station_data['hour'], station_data[selected_pollutant], 
-                   marker='o', linewidth=2, label=station, alpha=0.7)
-        
-        ax.set_xlabel('Jam', fontsize=12)
-        ax.set_ylabel(f'{selected_pollutant} (µg/m³)', fontsize=12)
-        ax.set_title(f'Rata-rata {selected_pollutant} per Jam - Semua Wilayah', fontsize=14, fontweight='bold')
-        ax.legend(title='Wilayah', bbox_to_anchor=(1.05, 1), loc='upper left')
-        ax.set_xticks(range(0, 24, 2))
-        ax.grid(alpha=0.3)
-        st.pyplot(fig)
+        fig = px.line(
+            hourly_region,
+            x="hour",
+            y=selected_pollutant,
+            color="station",
+            markers=True,
+            title=f"Rata-rata {selected_pollutant} per Jam - Semua Wilayah")
+    
+        fig.update_layout(
+            xaxis_title="Jam",
+            yaxis_title=f"{selected_pollutant} (µg/m³)",
+            legend_title="Wilayah",
+            xaxis=dict(dtick=2),
+            template="plotly_white")
+    
+        st.plotly_chart(fig, use_container_width=True)
     else:
         # Single region
         hourly = df_filtered.groupby('hour')[selected_pollutant].mean().reset_index()
         
-        fig, ax = px.subplots(figsize=(12, 5))
-        ax.fill_between(hourly['hour'], hourly[selected_pollutant], alpha=0.3, color=ACCENT)
-        ax.plot(hourly['hour'], hourly[selected_pollutant], 
-               marker='o', linewidth=2.5, color=PRIMARY, markersize=6)
-        
-        # Highlight worst hour
+        # Cari jam terburuk
         worst_h_idx = hourly[selected_pollutant].idxmax()
         worst_h = int(hourly.loc[worst_h_idx, 'hour'])
         worst_val = hourly.loc[worst_h_idx, selected_pollutant]
-        ax.plot(worst_h, worst_val, 'ro', markersize=12, label=f'Terburuk: {worst_h}:00')
-        
-        ax.set_xlabel('Jam', fontsize=12)
-        ax.set_ylabel(f'{selected_pollutant} (µg/m³)', fontsize=12)
-        ax.set_title(f'Pola Harian {selected_pollutant} di {selected_station}', fontsize=14, fontweight='bold')
-        ax.set_xticks(range(0, 24, 2))
-        ax.legend()
-        ax.grid(alpha=0.3)
-        st.pyplot(fig)
-        
-        st.markdown(f"**💡 Kesimpulan:** Jam dengan rata-rata {selected_pollutant} tertinggi di {selected_station} adalah **{worst_h}:00** ({worst_val:.2f} µg/m³).")
+    
+        fig = go.Figure()
+    
+        # Area fill
+        fig.add_trace(go.Scatter(
+            x=hourly['hour'],
+            y=hourly[selected_pollutant],
+            fill='tozeroy',
+            mode='none',
+            opacity=0.3,
+            name="Area"))
+    
+        # Garis utama
+        fig.add_trace(go.Scatter(
+            x=hourly['hour'],
+            y=hourly[selected_pollutant],
+            mode='lines+markers',
+            name=selected_station ))
+    
+        # Titik jam terburuk
+        fig.add_trace(go.Scatter(
+            x=[worst_h],
+            y=[worst_val],
+            mode='markers+text',
+            marker=dict(size=14, color='red'),
+            text=[f"Terburuk: {worst_h}:00"],
+            textposition="top center",
+            name="Terburuk"))
+    
+        fig.update_layout(
+            title=f"Pola Harian {selected_pollutant} di {selected_station}",
+            xaxis_title="Jam",
+            yaxis_title=f"{selected_pollutant} (µg/m³)",
+            xaxis=dict(dtick=2),
+            template="plotly_white")
+    
+        st.plotly_chart(fig, use_container_width=True)
+    
+        st.markdown(
+            f"**💡 Kesimpulan:** Jam dengan rata-rata {selected_pollutant} tertinggi di "
+            f"**{selected_station}** adalah **{worst_h}:00** ({worst_val:.2f} µg/m³)." )
 else:
     st.warning("Data jam atau polutan tidak tersedia.")
 
