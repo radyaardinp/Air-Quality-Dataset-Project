@@ -92,9 +92,6 @@ date_range = st.sidebar.date_input(
 stations = ["Semua Wilayah"] + sorted(df["station"].unique().tolist())
 selected_station = st.sidebar.selectbox("Pilih Stasiun (Wilayah)", stations)
 
-pollutants = [c for c in ["PM2.5","PM10","SO2","NO2","CO","O3"] if c in df.columns]
-selected_pollutant = st.sidebar.selectbox("Pilih Polutan", pollutants) if len(pollutants) > 0 else "PM2.5"
-
 # Apply filters
 start_date, end_date = pd.Timestamp(date_range[0]), pd.Timestamp(date_range[1])
 df_filtered = df[(df["date"] >= start_date) & (df["date"] <= end_date)].copy()
@@ -322,7 +319,19 @@ with col_a:
         
             fig.update_layout(
                 polar=dict(
-                    angularaxis=dict(direction="counterclockwise", rotation=90),
+                    angularaxis=dict(direction="counterclockwise",
+                                    rotation=90,
+                                    tickmode='array',
+                                    tickvals=[
+                                        0, 22.5, 45, 67.5,
+                                        90, 112.5, 135, 157.5,
+                                        180, 202.5, 225, 247.5,
+                                        270, 292.5, 315, 337.5],
+                                    ticktext=[
+                                        "N", "NNE", "NE", "ENE",
+                                        "E", "ESE", "SE", "SSE",
+                                        "S", "SSW", "SW", "WSW",
+                                        "W", "WNW", "NW", "NNW"],),
                     radialaxis=dict(showticklabels=True)))
         
             st.plotly_chart(fig, use_container_width=True)
@@ -469,6 +478,13 @@ st.header("🔬 Insight Detail untuk Pertanyaan EDA")
 # 1. Tren Tahunan
 # -------------------------
 st.subheader("1️⃣ Tren Kualitas Udara per Tahun")
+# Pilihan polutan
+pollutant_options = [col for col in ["PM2.5", "PM10", "SO2", "NO2", "CO", "O3"] if col in df_filtered.columns]
+
+selected_pollutant = st.selectbox(
+    "Pilih Parameter Kualitas Udara:",
+    pollutant_options,
+    index=pollutant_options.index("PM2.5") if "PM2.5" in pollutant_options else 0)
 
 if 'year' in df_filtered.columns and selected_pollutant in df_filtered.columns:
     if selected_station == "Semua Wilayah":
@@ -529,54 +545,9 @@ else:
 st.markdown("---")
 
 # -------------------------
-# 2. Korelasi Cuaca
+# 2. Perbedaan Antar Wilayah
 # -------------------------
-st.subheader("2️⃣ Korelasi antara Polutan dan Faktor Cuaca")
-
-weather_cols = [c for c in ['TEMP','PRES','DEWP','RAIN'] if c in df_filtered.columns]
-if selected_pollutant in df_filtered.columns and len(weather_cols) > 0:
-    corr_df = df_filtered[[selected_pollutant] + weather_cols].corr()
-    
-    fig = go.Figure(
-        data=go.Heatmap(
-            z=corr_df.values,
-            x=corr_df.columns,
-            y=corr_df.index,
-            colorscale="RdBu",
-            zmin=-1,
-            zmax=1,
-            colorbar=dict(title="Koefisien Korelasi"),
-            text=np.round(corr_df.values, 2),
-            texttemplate="%{text}",
-            hovertemplate="<b>%{y}</b> vs <b>%{x}</b><br>Korelasi: %{z:.2f}<extra></extra>"))
-
-    fig.update_layout(
-        title=f"Korelasi {selected_pollutant} dengan Faktor Cuaca<br>({selected_station})",
-        xaxis_title="Variabel",
-        yaxis_title="Variabel",
-        width=750,
-        height=650)
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Kesimpulan korelasi terkuat
-    corrs = corr_df[selected_pollutant].drop(selected_pollutant).abs().sort_values(ascending=False)
-    if len(corrs) > 0:
-        top_var = corrs.index[0]
-        top_val = corr_df.loc[top_var, selected_pollutant]
-        direction = "positif" if top_val > 0 else "negatif"
-        st.markdown(
-            f"**💡 Kesimpulan:** Faktor cuaca yang paling berkaitan dengan {selected_pollutant} "
-            f"adalah **{top_var}** dengan korelasi **{direction}** (r = {top_val:.2f}).")
-else:
-    st.warning("Data cuaca atau polutan tidak tersedia.")
-
-st.markdown("---")
-
-# -------------------------
-# 3. Perbedaan Antar Wilayah
-# -------------------------
-st.subheader("3️⃣ Perbedaan Rata-rata Polutan Antar Wilayah")
+st.subheader("2️⃣ Perbedaan Tingkat Polusi Antar Wilayah")
 
 if selected_pollutant in df_filtered.columns:
     if selected_station == "Semua Wilayah":
@@ -621,7 +592,6 @@ if selected_pollutant in df_filtered.columns:
         st.markdown(
             f"**💡 Kesimpulan:** Wilayah dengan {selected_pollutant} tertinggi adalah "
             f"**{worst_region}** ({worst_value:.2f} µg/m³).")
-    
     else:
         st.info(f"Anda sedang melihat data untuk **{selected_station}** saja. Pilih 'Semua Wilayah' untuk melihat perbandingan.")
 else:
@@ -630,9 +600,9 @@ else:
 st.markdown("---")
 
 # -------------------------
-# 4. Jam Terburuk
+# 3. Jam Terburuk
 # -------------------------
-st.subheader("4️⃣ Jam dengan Kualitas Udara Paling Buruk")
+st.subheader("3️⃣ Waktu dengan Kualitas Udara Paling Buruk")
 
 if 'hour' in df_filtered.columns and selected_pollutant in df_filtered.columns:
     if selected_station == "Semua Wilayah":
