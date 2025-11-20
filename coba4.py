@@ -117,62 +117,35 @@ def get_aqi_status(aqi):
         return "BERBAHAYA", "#8b0000"
 
 # Calculate current values
-if "PM2.5" in df.columns and len(df) > 0:
-    current_pm25 = df["PM2.5"].mean()
+df_curr = df_filtered.copy()
+
+def safe_mean(series):
+    return series.mean() if len(series) > 0 else 0
+
+# ---- PM2.5 + AQI ----
+if "PM2.5" in df_curr.columns:
+    current_pm25 = safe_mean(df_curr["PM2.5"])
     current_aqi = calculate_aqi(current_pm25)
     status_text, status_color = get_aqi_status(current_aqi)
-    
-    # Calculate change (compare current period with previous period of same length)
-    period_length = (end_date - start_date).days
-    prev_start = start_date - pd.Timedelta(days=period_length)
-    prev_end = start_date
-    
-    df_prev = df[(df["date"] >= prev_start) & (df["date"] < prev_end)]
-    if selected_station != "Semua Wilayah":
-        df_prev = df_prev[df_prev["station"] == selected_station]
-    
-    if len(df_prev) > 0:
-        prev_aqi = calculate_aqi(df_prev["PM2.5"].mean())
-        aqi_change = ((current_aqi - prev_aqi) / prev_aqi * 100) if prev_aqi > 0 else 0
-    else:
-        aqi_change = 0
 else:
     current_pm25 = 0
     current_aqi = 0
     status_text = "N/A"
     status_color = "#6c757d"
-    aqi_change = 0
 
-# Get other metrics
-if "PM10" in df.columns:
-    current_pm10 = df["PM10"].mean()
-    if len(df_prev) > 0 and "PM10" in df_prev.columns:
-        pm10_change = ((current_pm10 - df_prev["PM10"].mean()) / df_prev["PM10"].mean() * 100)
-    else:
-        pm10_change = 0
-else:
-    current_pm10 = 0
-    pm10_change = 0
+aqi_change = 0  # tidak ada periode pembanding
 
-if "TEMP" in df.columns:
-    current_temp = df["TEMP"].mean()
-    if len(df_prev) > 0 and "TEMP" in df_prev.columns:
-        temp_change = ((current_temp - df_prev["TEMP"].mean()) / df_prev["TEMP"].mean() * 100)
-    else:
-        temp_change = 0
-else:
-    current_temp = 0
-    temp_change = 0
+# ---- PM10 ----
+current_pm10 = safe_mean(df_curr["PM10"]) if "PM10" in df_curr.columns else 0
+pm10_change = 0
 
-if "DEWP" in df.columns:
-    current_humidity = df["DEWP"].mean()
-    if len(df_prev) > 0 and "DEWP" in df_prev.columns:
-        humidity_change = ((current_humidity - df_prev["DEWP"].mean()) / df_prev["DEWP"].mean() * 100)
-    else:
-        humidity_change = 0
-else:
-    current_humidity = 0
-    humidity_change = 0
+# ---- TEMP ----
+current_temp = safe_mean(df_curr["TEMP"]) if "TEMP" in df_curr.columns else 0
+temp_change = 0
+
+# ---- DEWP (Humidity proxy)
+current_humidity = safe_mean(df_curr["DEWP"]) if "DEWP" in df_curr.columns else 0
+humidity_change = 0
 
 # Display modern metrics cards
 col1, col2 = st.columns([1, 1])
