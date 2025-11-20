@@ -481,13 +481,13 @@ if 'year' in df.columns and selected_pollutant in df.columns:
         plot_df = df_filtered[["date", "PM2.5"]].dropna()
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=df_filtered["date"],
-            y=df_filtered["PM2.5"],
-            mode='lines+markers',  # <- wajib ada 'lines' supaya fill/tozeroy bisa
+            x=plot_df["date"],
+            y=plot_df["PM2.5"],
+            mode='lines+markers', 
             line=dict(color=PRIMARY, width=3),
             marker=dict(size=8),
             fill='tozeroy',
-            fillcolor=[ACCENT] + "55"
+            fillcolor=ACCENT + "55" 
         ))
 
         fig.update_layout(
