@@ -261,7 +261,7 @@ with col_a:
             r="PM25",
             theta="angle",
             color="PM25",
-            color_continuous_scale=px.colors.sequential.Pastel,
+            color_continuous_scale=px.colors.sequential.Peach,
             title="Visualisasi Arah Datangnya Polusi")
     
         fig.update_layout(
