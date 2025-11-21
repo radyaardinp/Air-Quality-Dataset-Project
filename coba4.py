@@ -605,7 +605,7 @@ if 'hour' in df.columns and selected_pollutant in df.columns:
             y=hourly[selected_pollutant],
             fill='tozeroy',
             mode='none',
-            fillcolor=PEACH_LIGHT
+            fillcolor=PEACH_LIGHT,
             opacity=0.3,
             name="Area"))
     
