@@ -424,30 +424,27 @@ if selected_station == "Semua Wilayah":
     fig = go.figure()
 
     for pol in pollutants:
-        for stt in q_df["station"].unique():
-            temp = q_df[q_df["station"] == stt]
-            PEACH_PALETTE = {
-                "Aotizhongxin": "#FFBCB3",
-                "Changping": "#FF9E7A",
-                "Dingling": "#FF7F50"}
+        temp = q_df[q_df["station"] == stt]
+        PEACH_PALETTE = {
+            "Aotizhongxin": "#FFBCB3",
+            "Changping": "#FF9E7A",
+            "Dingling": "#FF7F50"}
 
-            fig.add_trace(
-                go.Scatter(
-                    x=temp["quarter"],
-                    y=temp[pol],
-                    mode="lines+markers",
-                    name=stt,
-                    line=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A")),
-                    marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))))
+        fig.add_trace(
+            go.Scatter(
+                x=temp["quarter"],
+                y=temp[pol],
+                mode="lines+markers",
+                name=stt,
+                line=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A")),
+                marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))))
 
     fig.update_layout(
-        height=450,
+        height=550,
         title=dict(
             text="Tren Polutan 2013–2017",
             y=0.95),
-        margin=dict(
-            l=20, r=100,
-            t=60, b=20 ),
+        margin=dict(l=20, r=100, t=60, b=20 ),
         template="plotly_white",
         
         legend=dict(
