@@ -292,22 +292,20 @@ with col_b:
         
         # Define colors for each category
         color_map = {
-            "Baik": "#28a745",
-            "Sedang": "#ffc107",
-            "Tidak Sehat": "#fd7e14",
-            "Sangat Tidak Sehat": "#dc3545",
-            "Berbahaya": "#6f42c1"
-        }
-        colors = [color_map.get(cat, "#6c757d") for cat in cat_counts.index]
+            "Baik": "#FFB7A2",
+            "Sedang": "#FFA98E",
+            "Tidak Sehat": "#FF8F70",
+            "Sangat Tidak Sehat": "#FF7657",
+            "Berbahaya": "#FF5C3E"}
+        colors = [PEACH_PALETTE.get(cat, "#FF8F70") for cat in cat_counts.index]
         
         fig = px.pie(
             names=cat_counts.index,
             values=cat_counts.values,
             color=cat_counts.index,
-            color_discrete_map=color_map,
+            color_discrete_map=PEACH_PALETTE
             title=f"Proporsi Kategori Kualitas Udara<br><sup>Total: {len(df):,} data</sup>",
-            hole=0  # Bisa diubah ke 0.4 kalau mau donut chart
-        )
+            hole=0)
     
         fig.update_traces(textposition='inside', textinfo='percent+label')
         fig.update_layout(showlegend=True)
@@ -334,7 +332,7 @@ if "season" in df_filtered.columns and "PM2.5" in df.columns:
             barmode="group",
             title="Perbandingan PM2.5 per Musim di Semua Wilayah",
             labels={"season": "Musim", "PM2.5": "Rata-rata PM2.5 (µg/m³)", "station": "Wilayah"},
-            color_discrete_sequence=px.colors.qualitative.Set2
+            color_discrete_map=PEACH_PALLETE
         )
 
         fig.update_layout(
@@ -356,9 +354,8 @@ if "season" in df_filtered.columns and "PM2.5" in df.columns:
         )
 
         # Warna default
-        colors = [ACCENT] * len(season_data)
-        # Highlight musim terburuk (paling tinggi)
-        colors[0] = "#dc3545"
+        colors = [SEASON_PEACH.get(season, "#FF8F70") for season in season_data.index]
+        colors[0] = "#FF5C3E"
 
         fig.update_traces(marker_color=colors)
 
@@ -509,40 +506,37 @@ st.subheader("2️⃣ Perbedaan Tingkat Polusi Antar Wilayah")
 if selected_pollutant in df.columns:
     if selected_station == "Semua Wilayah":
         region_avg = df_filtered.groupby('station')[selected_pollutant].mean().sort_values(ascending=False).reset_index()
+
+        PEACH_MAIN = "#FF9E7A"
+        PEACH_DARK = "#FF5C3E"
+
+        colors = [PEACH_MAIN] * len(region_avg)
+        colors[0] = PEACH_DARK
         
-        col1, col2 = st.columns([2, 1])
+        fig = px.bar(
+            region_avg,
+            x=selected_pollutant,
+            y="station",
+            orientation="h",
+            title=f"Perbandingan {selected_pollutant} Antar Wilayah",
+            labels={
+                selected_pollutant: f"Rata-rata {selected_pollutant} (µg/m³)",
+                "station": "Wilayah" })
+        # Apply peach colors
+        fig.update_traces(marker_color=colors)
         
-        with col1:
-            fig = px.bar(
-                region_avg,
-                x=selected_pollutant,
-                y="station",
-                orientation="h",
-                color=selected_pollutant,
-                color_continuous_scale="RdYlGn_r",
-                title=f"Perbandingan {selected_pollutant} Antar Wilayah",
-                labels={
-                    selected_pollutant: f"Rata-rata {selected_pollutant} (µg/m³)",
-                    "station": "Wilayah" })
+        # Styling
+        fig.update_layout(
+            xaxis=dict(showgrid=True, gridwidth=0.3),
+            yaxis=dict(categoryorder="total descending"),
+            coloraxis_showscale=False)
     
-            # Styling
-            fig.update_layout(
-                xaxis=dict(showgrid=True, gridwidth=0.3),
-                yaxis=dict(categoryorder="total descending"),
-                coloraxis_colorbar=dict(title=f"{selected_pollutant} (µg/m³)"))
-    
-            # Add labels on bars
-            fig.update_traces(
-                texttemplate="%{x:.1f}",
-                textposition="outside")
-            st.plotly_chart(fig, use_container_width=True)
+        # Add labels on bars
+        fig.update_traces(
+            texttemplate="%{x:.1f}",
+            textposition="outside")
         
-        with col2:
-            st.dataframe(
-                region_avg.style.format({selected_pollutant: '{:.2f}'})
-                .background_gradient(subset=[selected_pollutant], cmap='RdYlGn_r'),
-                use_container_width=True,
-                height=400)
+        st.plotly_chart(fig, use_container_width=True)
         
         worst_region = region_avg.loc[0, 'station']
         worst_value = region_avg.loc[0, selected_pollutant]
@@ -561,10 +555,21 @@ st.markdown("---")
 # -------------------------
 st.subheader("3️⃣ Waktu dengan Kualitas Udara Paling Buruk")
 
+# Palet peach
+PEACH_LIGHT = "#FFBCB3"
+PEACH_MAIN  = "#FF9E7A"
+PEACH_DARK  = "#FF5C3E"
+
 if 'hour' in df.columns and selected_pollutant in df.columns:
     if selected_station == "Semua Wilayah":
         # Show all regions comparison
         hourly_region = df_filtered.groupby(['hour', 'station'])[selected_pollutant].mean().reset_index()
+        
+        # Warna peach per wilayah (acak tapi tetap peach tone)
+        station_list = hourly_region['station'].unique()
+        peach_palette = {
+            st: ["#FFBCB3", "#FF9E7A", "#FF7F63", "#FF6A4F", "#FF5C3E"][i % 5]
+            for i, st in enumerate(station_list)}
         
         fig = px.line(
             hourly_region,
@@ -572,7 +577,8 @@ if 'hour' in df.columns and selected_pollutant in df.columns:
             y=selected_pollutant,
             color="station",
             markers=True,
-            title=f"Rata-rata {selected_pollutant} per Jam - Semua Wilayah")
+            title=f"Rata-rata {selected_pollutant} per Jam - Semua Wilayah",
+            color_discreate_map=peach_pallete)
     
         fig.update_layout(
             xaxis_title="Jam",
@@ -599,6 +605,7 @@ if 'hour' in df.columns and selected_pollutant in df.columns:
             y=hourly[selected_pollutant],
             fill='tozeroy',
             mode='none',
+            fillcolor=PEACH_LIGHT
             opacity=0.3,
             name="Area"))
     
@@ -607,6 +614,8 @@ if 'hour' in df.columns and selected_pollutant in df.columns:
             x=hourly['hour'],
             y=hourly[selected_pollutant],
             mode='lines+markers',
+            line=dict(color=PEACH_MAIN, width=3),
+            marker=dict(color=PEACH_MAIN),
             name=selected_station ))
     
         # Titik jam terburuk
@@ -614,7 +623,7 @@ if 'hour' in df.columns and selected_pollutant in df.columns:
             x=[worst_h],
             y=[worst_val],
             mode='markers+text',
-            marker=dict(size=14, color='red'),
+            marker=dict(size=14, color=PEACH_DARK),
             text=[f"Terburuk: {worst_h}:00"],
             textposition="top center",
             name="Terburuk"))
