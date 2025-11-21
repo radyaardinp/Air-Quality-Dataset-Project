@@ -443,16 +443,23 @@ if selected_station == "Semua Wilayah":
                     marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))))
 
     fig.update_layout(
+        height=450,
+        title=dict(
+            text="Tren Polutan 2013–2017",
+            y=0.95),
+        margin=dict(
+            l=20, r=100,
+            t=60, b=20 ),
+        template="plotly_white",
+        
         legend=dict(
-            orientation="v",      # vertical
-            y=0.5,                # posisi tengah secara vertikal
-            x=1.02,               # sedikit di kanan plot
+            orientation="v",
+            y=0.5,
+            x=1.02,
             xanchor="left",
-            bgcolor="rgba(255,255,255,0.6)",  # background biar rapi
-            bordercolor="rgba(0,0,0,0.1)",
-            borderwidth=1,
-            font=dict(size=10)),
-        margin=dict(l=20, r=80, t=80, b=10))
+            bgcolor="rgba(255,255,255,0.6)",
+            borderwidth=0,
+            font=dict(size=10)))
 
     st.plotly_chart(fig, use_container_width=True)
 
