@@ -243,10 +243,17 @@ with col_a:
     
     # Check kolom
     if "wd" in df_filtered.columns and "PM2.5" in df_filtered.columns:
-        # Ambil daftar arah angin unik (string)
-        directions = sorted(df_filtered["wd"].dropna().unique())
-        angles = np.linspace(0, 360, len(directions), endpoint=False)  
+        # Urutan arah angin standar kompas
+        compass_order = [
+            "N", "NNE", "NE", "ENE",
+            "E", "ESE", "SE", "SSE",
+            "S", "SSW", "SW", "WSW",
+            "W", "WNW", "NW", "NNW" ]
         
+        # Ambil hanya arah yg ada dalam data, urut sesuai kompas
+        directions = [d for d in compass_order if d in df_filtered["wd"].unique()]
+        angles = np.linspace(0, 360, len(directions), endpoint=False)
+  
         # Hitung rata-rata PM2.5 per arah angin
         pm = df_filtered.groupby("wd")["PM2.5"].mean().reindex(directions)
     
