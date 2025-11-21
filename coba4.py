@@ -333,7 +333,7 @@ if "season" in df_filtered.columns and "PM2.5" in df.columns:
             barmode="group",
             title="Perbandingan PM2.5 per Musim di Semua Wilayah",
             labels={"season": "Musim", "PM2.5": "Rata-rata PM2.5 (µg/m³)", "station": "Wilayah"},
-            color_discrete_map=PEACH_PALLETE
+            color_discrete_map=color_map
         )
 
         fig.update_layout(
