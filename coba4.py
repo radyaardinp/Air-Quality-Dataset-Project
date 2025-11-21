@@ -455,8 +455,8 @@ if selected_station == "Semua Wilayah":
             orientation="h",
             y=-0.25,     
             x=0.5,
-            xanchor="center",
-        template="plotly_white"))
+            xanchor="center"),
+        template="plotly_white")
 
     st.plotly_chart(fig, use_container_width=True)
 
