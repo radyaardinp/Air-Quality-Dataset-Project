@@ -304,7 +304,7 @@ with col_b:
             names=cat_counts.index,
             values=cat_counts.values,
             color=cat_counts.index,
-            color_discrete_map=PEACH_PALETTE,
+            color_discrete_map=color_map,
             title=f"Proporsi Kategori Kualitas Udara<br><sup>Total: {len(df):,} data</sup>",
             hole=0)
     
