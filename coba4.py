@@ -447,8 +447,15 @@ if selected_station == "Semua Wilayah":
                 row=row, col=col)
 
     fig.update_layout(
-        height=900,
+        height=950,
+        width=None,
         title="Tren Polutan 2013–2017",
+        margin=dict(l=20, r=20, t=80, b=40),   # kecilkan margin
+        legend=dict(
+            orientation="h",
+            y=-0.25,     
+            x=0.5,
+            xanchor="center",
         template="plotly_white")
 
     st.plotly_chart(fig, use_container_width=True)
@@ -471,7 +478,8 @@ else:
         title=f"Tren {selected_pollutant} per Tahun – {selected_station}",
         labels={
             "quarter": "Quarter",
-            selected_pollutant: f"{selected_pollutant} (µg/m³)"})
+            selected_pollutant: f"{selected_pollutant} (µg/m³)"}
+        color_discrete_sequence=["#FF9E7A"])
 
     fig.update_layout(
         template="plotly_white",
