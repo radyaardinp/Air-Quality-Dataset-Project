@@ -442,8 +442,7 @@ if selected_station == "Semua Wilayah":
                     mode="lines+markers",
                     name=stt,
                     line=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A")),
-                    marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))),
-                row=row, col=col)
+                    marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))))
 
     fig.update_layout(
         height=950,
