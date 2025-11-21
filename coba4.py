@@ -427,7 +427,6 @@ if selected_station == "Semua Wilayah":
         horizontal_spacing=0.12,
         vertical_spacing=0.12)
 
-    row, col = 1, 1
     for pol in pollutants:
         for stt in q_df["station"].unique():
             temp = q_df[q_df["station"] == stt]
