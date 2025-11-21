@@ -411,8 +411,6 @@ df['quarter'] = df['date'].dt.to_period("Q").astype(str)
 
 if selected_station == "Semua Wilayah":
     st.subheader("📈 Tren Kualitas Udara Per Tahun")
-    
-    # list polutan yang akan dibuatkan subplot
     pollutants = [selected_pollutant]
 
     # pivot data: rata-rata per station per quarter
@@ -423,23 +421,23 @@ if selected_station == "Semua Wilayah":
 
     fig = go.Figure()
     stations = q_df["station"].unique()
-    pol = pollutants[0]
     
-    for stt in pollutants:
-        temp = q_df[q_df["station"] == stt]
-        PEACH_PALETTE = {
-            "Aotizhongxin": "#FFBCB3",
-            "Changping": "#FF9E7A",
-            "Dingling": "#FF7F50"}
-
-        fig.add_trace(
-            go.Scatter(
-                x=temp["quarter"],
-                y=temp[pol],
-                mode="lines+markers",
-                name=stt,
-                line=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A")),
-                marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))))
+    for pol in pollutants:
+        for stt in stations:
+            temp = q_df[q_df["station"] == stt]
+            PEACH_PALETTE = {
+                "Aotizhongxin": "#FFBCB3",
+                "Changping": "#FF9E7A",
+                "Dingling": "#FF7F50"}
+    
+            fig.add_trace(
+                go.Scatter(
+                    x=temp["quarter"],
+                    y=temp[pol],
+                    mode="lines+markers",
+                    name=stt,
+                    line=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A")),
+                    marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))))
 
     fig.update_layout(
         height=550,
