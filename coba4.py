@@ -487,12 +487,14 @@ else:
     st.plotly_chart(fig, use_container_width=True)
 
     # Kesimpulan tren
-    if len(trend_df) >= 2:
-        slope = np.polyfit(trend_df['year'], trend_df[selected_pollutant], 1)[0]
-        verdict = 'Meningkat ⬆️' if slope > 0 else ('Menurun ⬇️' if slope < 0 else 'Stabil ➡️')
-        st.markdown(
-            f"**💡 Kesimpulan:** Tren {selected_pollutant} di {selected_station} cenderung **{verdict}** "
-            f"(slope = {slope:.3f}).")
+    if selected_station != "Semua Wilayah":
+        if len(trend_df) >= 2:
+            slope = np.polyfit(trend_df['year'], trend_df[selected_pollutant], 1)[0]
+            verdict = 'Meningkat ⬆️' if slope > 0 else ('Menurun ⬇️' if slope < 0 else 'Stabil ➡️')
+            st.markdown(
+                f"**💡 Kesimpulan:** Tren {selected_pollutant} di {selected_station} cenderung **{verdict}** "
+                f"(slope = {slope:.3f}).")
+
         
 st.markdown("---")
 
