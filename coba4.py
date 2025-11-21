@@ -413,7 +413,7 @@ if selected_station == "Semua Wilayah":
     st.subheader("📈 Tren Kualitas Udara Per Tahun")
     
     # list polutan yang akan dibuatkan subplot
-    pollutants = pollutant_options
+    pollutants = [selected_pollutant]
 
     # pivot data: rata-rata per station per quarter
     q_df = (
