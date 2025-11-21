@@ -297,7 +297,8 @@ with col_b:
             "Tidak Sehat": "#FF8F70",
             "Sangat Tidak Sehat": "#FF7657",
             "Berbahaya": "#FF5C3E"}
-        colors = [PEACH_PALETTE.get(cat, "#FF8F70") for cat in cat_counts.index]
+        
+        colors = [color_map.get(cat, "#FF8F70") for cat in cat_counts.index]
         
         fig = px.pie(
             names=cat_counts.index,
