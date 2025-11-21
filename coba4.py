@@ -421,7 +421,6 @@ if selected_station == "Semua Wilayah":
         .mean()
         .reset_index())
 
-    # Setup subplot 3x2
     fig = make_subplots(
         rows=3, cols=2,
         subplot_titles=[f"{p}" for p in pollutants],
@@ -447,15 +446,9 @@ if selected_station == "Semua Wilayah":
                     marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))),
                 row=row, col=col)
 
-        # geser slot subplot
-        col += 1
-        if col == 3:
-            col = 1
-            row += 1
-
     fig.update_layout(
         height=900,
-        title="Tren Polutan (Quarterly) 2013–2017",
+        title="Tren Polutan 2013–2017",
         template="plotly_white")
 
     st.plotly_chart(fig, use_container_width=True)
@@ -475,7 +468,7 @@ else:
         x="quarter",
         y=selected_pollutant,
         markers=True,
-        title=f"Tren {selected_pollutant} per Quarter – {selected_station}",
+        title=f"Tren {selected_pollutant} per Tahun – {selected_station}",
         labels={
             "quarter": "Quarter",
             selected_pollutant: f"{selected_pollutant} (µg/m³)"})
