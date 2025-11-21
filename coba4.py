@@ -421,9 +421,7 @@ if selected_station == "Semua Wilayah":
         .mean()
         .reset_index())
 
-    fig = make_subplots(
-        rows=3, cols=1,
-        subplot_titles=pollutants)
+    fig = go.figure()
 
     for pol in pollutants:
         for stt in q_df["station"].unique():
