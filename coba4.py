@@ -423,7 +423,8 @@ if selected_station == "Semua Wilayah":
 
     fig = go.Figure()
     stations = q_df["station"].unique()
-    for pol in pollutants:
+    
+    for stt in pollutants:
         temp = q_df[q_df["station"] == stt]
         PEACH_PALETTE = {
             "Aotizhongxin": "#FFBCB3",
