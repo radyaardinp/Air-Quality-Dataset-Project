@@ -241,11 +241,11 @@ col_a, col_b = st.columns([1, 1])
 with col_a:
     st.subheader("🌬️Visualisasi Arah Datangnya Polusi")
     
-    # Check if wind direction and speed columns exist
-    if "wd" in df_filtered.columns and "PM2/5" in df_filtered.columns:
+    # Check kolom
+    if "wd" in df_filtered.columns and "PM2.5" in df_filtered.columns:
         # Ambil daftar arah angin unik (string)
         directions = sorted(df_filtered["wd"].dropna().unique())
-        angles = np.linspace(0, 360, len(directions), endpoint=False)  # plotly pakai derajat
+        angles = np.linspace(0, 360, len(directions), endpoint=False)  
         
         # Hitung rata-rata PM2.5 per arah angin
         pm = df_filtered.groupby("wd")["PM2.5"].mean().reindex(directions)
@@ -262,7 +262,7 @@ with col_a:
             theta="angle",
             color="PM25",
             color_continuous_scale=px.colors.sequential.Pastel,
-            title="Wind-Pollution Rose (PM2.5 per Arah Angin)")
+            title="Visualisasi Arah Datangnya Polusi")
     
         fig.update_layout(
             polar=dict(
@@ -273,9 +273,7 @@ with col_a:
                     tickvals=angles,
                     ticktext=directions),
                 radialaxis=dict(showticklabels=True)))
-    
         st.plotly_chart(fig, use_container_width=True)
-    
     else:
         st.info("Kolom 'wd' atau 'PM2.5' tidak tersedia.")
 
