@@ -242,83 +242,42 @@ with col_a:
     st.subheader("🌬️Visualisasi Arah Datangnya Polusi")
     
     # Check if wind direction and speed columns exist
-    if "wd" in df_filtered.columns and "WSPM" in df.columns:
-        # Function to convert wind direction string to degrees
-        def wind_direction_to_degrees(wd_str):
-            """Convert wind direction string to degrees (0-360)"""
-            direction_map = {
-                'N': 0, 'NNE': 22.5, 'NE': 45, 'ENE': 67.5,
-                'E': 90, 'ESE': 112.5, 'SE': 135, 'SSE': 157.5,
-                'S': 180, 'SSW': 202.5, 'SW': 225, 'WSW': 247.5,
-                'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5}
-            if pd.isna(wd_str):
-                return np.nan
-            return direction_map.get(str(wd_str).strip().upper(), np.nan)
+    if "wd" in df_filtered.columns and "PM2/5" in df_filtered.columns:
+        # Ambil daftar arah angin unik (string)
+        directions = sorted(df_filtered["wd"].dropna().unique())
+        angles = np.linspace(0, 360, len(directions), endpoint=False)  # plotly pakai derajat
         
-        # Prepare wind data
-        wind_data = df_filtered[["wd", "WSPM"]].copy()
-        wind_data["wd_degrees"] = wind_data["wd"].apply(wind_direction_to_degrees)
-        wind_data = wind_data.dropna()
-        wind_data = wind_data[wind_data["WSPM"] >= 0]
-        
-        if len(wind_data) > 50:  # Need enough data points for windrose
-            wind_data['wd_bin'] = (wind_data['wd_degrees'] // 22.5) * 22.5
-
-            rose_df = wind_data.groupby('wd_bin')['WSPM'].mean().reset_index().dropna()
-            
-            fig = px.bar_polar(
-                rose_df,
-                r="WSPM",
-                theta="wd_bin",
-                color="WSPM",
-                color_continuous_scale=px.colors.sequential.Viridis,
-                title="Wind Rose (Arah & Kecepatan Angin)")
-        
-            fig.update_layout(
-                polar=dict(
-                    angularaxis=dict(direction="clockwise",
-                                    rotation=90,
-                                    tickmode='array',
-                                    tickvals=[0, 22.5, 45, 67.5,
-                                        90, 112.5, 135, 157.5,
-                                        180, 202.5, 225, 247.5,
-                                        270, 292.5, 315, 337.5],
-                                    ticktext=["N", "NNE", "NE", "ENE",
-                                        "E", "ESE", "SE", "SSE",
-                                        "S", "SSW", "SW", "WSW",
-                                        "W", "WNW", "NW", "NNW"],),
-                    radialaxis=dict(showticklabels=True)))
-        
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("Data arah angin tidak cukup untuk wind rose (min 50 data point). Menampilkan distribusi arah angin.")
-        
-            direction_counts = df_filtered["wd"].value_counts().reset_index()
-            direction_counts.columns = ["direction", "count"]
-            direction_counts["deg"] = direction_counts["direction"].apply(wind_direction_to_degrees)
-            direction_counts = direction_counts.dropna().sort_values("deg")
-            
-                
-            if len(direction_counts) > 0:
-                fig2 = px.bar_polar(
-                    direction_counts,
-                    r="count",
-                    theta="direction",
-                    color="count",
-                    color_continuous_scale=px.colors.sequential.Plasma,
-                    title="Distribusi Arah Angin"
-                )
-                fig2.update_layout(
-                    polar=dict(
-                        angularaxis=dict(direction="counterclockwise", rotation=90),
-                        radialaxis=dict(showticklabels=True)
-                    )
-                )
-                st.plotly_chart(fig2, use_container_width=True)
-            else:
-                st.info("Data arah angin tidak valid.")
+        # Hitung rata-rata PM2.5 per arah angin
+        pm = df_filtered.groupby("wd")["PM2.5"].mean().reindex(directions)
+    
+        # Siapkan DataFrame untuk polar bar
+        rose_df = pd.DataFrame({
+            "direction": directions,
+            "angle": angles,
+            "PM25": pm.values})
+    
+        fig = px.bar_polar(
+            rose_df,
+            r="PM25",
+            theta="angle",
+            color="PM25",
+            color_continuous_scale=px.colors.sequential.Pastel,
+            title="Wind-Pollution Rose (PM2.5 per Arah Angin)")
+    
+        fig.update_layout(
+            polar=dict(
+                angularaxis=dict(
+                    direction="clockwise",
+                    rotation=90,
+                    tickmode="array",
+                    tickvals=angles,
+                    ticktext=directions),
+                radialaxis=dict(showticklabels=True)))
+    
+        st.plotly_chart(fig, use_container_width=True)
+    
     else:
-        st.info("Kolom 'wd' (wind direction) atau 'WSPM' tidak tersedia dalam data.")
+        st.info("Kolom 'wd' atau 'PM2.5' tidak tersedia.")
 
 with col_b:
     st.subheader("🎯 Distribusi Kategori Kualitas Udara")
