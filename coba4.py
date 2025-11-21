@@ -493,9 +493,7 @@ else:
         st.markdown(
             f"**💡 Kesimpulan:** Tren {selected_pollutant} di {selected_station} cenderung **{verdict}** "
             f"(slope = {slope:.3f}).")
-else:
-    st.warning("Data tahun atau polutan tidak tersedia.")
-
+        
 st.markdown("---")
 
 # -------------------------
