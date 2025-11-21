@@ -546,9 +546,6 @@ if selected_pollutant in df.columns:
         
         worst_region = region_avg.loc[0, 'station']
         worst_value = region_avg.loc[0, selected_pollutant]
-        st.markdown(
-            f"**💡 Kesimpulan:** Wilayah dengan {selected_pollutant} tertinggi adalah "
-            f"**{worst_region}** ({worst_value:.2f} µg/m³).")
     else:
         st.info(f"Anda sedang melihat data untuk **{selected_station}** saja. Pilih 'Semua Wilayah' untuk melihat perbandingan.")
 else:
