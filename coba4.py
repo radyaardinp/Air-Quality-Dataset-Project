@@ -405,69 +405,86 @@ selected_pollutant = st.selectbox(
     pollutant_options,
     index=pollutant_options.index("PM2.5") if "PM2.5" in pollutant_options else 0)
 
-if 'year' in df.columns and selected_pollutant in df.columns:
-    if selected_station == "Semua Wilayah":
-        # Compare all regions
-        yearly_region = df_filtered.groupby(['year', 'station'])[selected_pollutant].mean().reset_index()
-        
-        fig = px.line(
-            yearly_region,
-            x="year",
-            y=selected_pollutant,
-            color="station",
-            markers=True,
-            title=f"Tren {selected_pollutant} per Tahun - Semua Wilayah",
-            labels={
-                "year": "Tahun",
-                selected_pollutant: f"{selected_pollutant} (µg/m³)",
-                "station": "Wilayah"})
-        fig.update_layout(
-            legend_title="Wilayah",
-            hovermode="x unified",
-            yaxis=dict(showgrid=True, gridwidth=0.3) )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        trend_df = df_filtered.groupby('year')[selected_pollutant].mean().reset_index()
+# pastikan dataframe punya kolom date sebagai datetime
+df['date'] = pd.to_datetime(df['date'])
+df['quarter'] = df['date'].dt.to_period("Q").astype(str)
 
-        fig = px.line(
-            trend_df,
-            x="year",
-            y=selected_pollutant,
-            markers=True,
-            title=f"Tren {selected_pollutant} di {selected_station}",
-            labels={
-                "year": "Tahun",
-                selected_pollutant: f"{selected_pollutant} (µg/m³)"})
+if selected_station == "Semua Wilayah":
+    st.subheader("📈 Tren Kualitas Udara Per Tahun")
+    
+    # list polutan yang akan dibuatkan subplot
+    pollutants = pollutant_options
 
-        # Warna line & fill
-        PRIMARY = "#007bff"
-        ACCENT = "#1f77b4"
-        def hex_to_rgba(hex_color, alpha=0.33):
-            hex_color = hex_color.lstrip('#')
-            r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-            return f'rgba({r},{g},{b},{alpha})'
-        
-        fillcolor = hex_to_rgba(ACCENT, alpha=0.33)
+    # pivot data: rata-rata per station per quarter
+    q_df = (
+        df.groupby(["quarter", "station"])[pollutants]
+        .mean()
+        .reset_index())
 
-        plot_df = df_filtered[["date", "PM2.5"]].dropna()
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=plot_df["date"],
-            y=plot_df["PM2.5"],
-            mode='lines+markers', 
-            line=dict(color=PRIMARY, width=3),
-            marker=dict(size=8),
-            fill='tozeroy',
-            fillcolor=fillcolor 
-        ))
+    # Setup subplot 3x2
+    fig = make_subplots(
+        rows=3, cols=2,
+        subplot_titles=[f"{p}" for p in pollutants],
+        horizontal_spacing=0.12,
+        vertical_spacing=0.12)
 
-        fig.update_layout(
-            title="Trend PM2.5",
-            xaxis_title="Tanggal",
-            yaxis_title="PM2.5 (µg/m³)",
-            template="plotly_white"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    row, col = 1, 1
+    for pol in pollutants:
+        for stt in q_df["station"].unique():
+            temp = q_df[q_df["station"] == stt]
+            PEACH_PALETTE = {
+                "Aotizhongxin": "#FFBCB3",
+                "Changping": "#FF9E7A",
+                "Dingling": "#FF7F50"}
+
+            fig.add_trace(
+                go.Scatter(
+                    x=temp["quarter"],
+                    y=temp[pol],
+                    mode="lines+markers",
+                    name=stt,
+                    line=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A")),
+                    marker=dict(color=PEACH_PALETTE.get(stt, "#FF9E7A"))),
+                row=row, col=col)
+
+        # geser slot subplot
+        col += 1
+        if col == 3:
+            col = 1
+            row += 1
+
+    fig.update_layout(
+        height=900,
+        title="Tren Polutan (Quarterly) 2013–2017",
+        template="plotly_white")
+
+    st.plotly_chart(fig, use_container_width=True)
+
+else:
+    st.subheader(f"📈 Tren {selected_pollutant} per Tahun – {selected_station}")
+
+    df_station = df[df["station"] == selected_station].copy()
+
+    q_df = (
+        df_station.groupby("quarter")[selected_pollutant]
+        .mean()
+        .reset_index())
+
+    fig = px.line(
+        q_df,
+        x="quarter",
+        y=selected_pollutant,
+        markers=True,
+        title=f"Tren {selected_pollutant} per Quarter – {selected_station}",
+        labels={
+            "quarter": "Quarter",
+            selected_pollutant: f"{selected_pollutant} (µg/m³)"})
+
+    fig.update_layout(
+        template="plotly_white",
+        xaxis_tickangle=-45)
+
+    st.plotly_chart(fig, use_container_width=True)
 
         # Kesimpulan tren
         if len(trend_df) >= 2:
