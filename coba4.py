@@ -355,6 +355,11 @@ if "season" in df_filtered.columns and "PM2.5" in df.columns:
         )
 
         # Warna default
+        SEASON_PEACH = {
+            "Spring": "#FFBCB3",
+            "Summer": "#FF9E7A",
+            "Autumn": "#FF7F63",
+            "Winter": "#FF5C3E"}
         colors = [SEASON_PEACH.get(season, "#FF8F70") for season in season_data.index]
         colors[0] = "#FF5C3E"
 
@@ -579,7 +584,7 @@ if 'hour' in df.columns and selected_pollutant in df.columns:
             color="station",
             markers=True,
             title=f"Rata-rata {selected_pollutant} per Jam - Semua Wilayah",
-            color_discreate_map=peach_pallete)
+            color_discrete_map=peach_palette)
     
         fig.update_layout(
             xaxis_title="Jam",
