@@ -421,7 +421,7 @@ if selected_station == "Semua Wilayah":
         .mean()
         .reset_index())
 
-    fig = go.figure()
+    fig = go.Figure()
 
     for pol in pollutants:
         temp = q_df[q_df["station"] == stt]
