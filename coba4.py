@@ -423,6 +423,7 @@ if selected_station == "Semua Wilayah":
 
     fig = go.Figure()
     stations = q_df["station"].unique()
+    pol = pollutants[0]
     
     for stt in pollutants:
         temp = q_df[q_df["station"] == stt]
