@@ -488,14 +488,18 @@ else:
 
     # Kesimpulan tren
     if selected_station != "Semua Wilayah":
-        if len(trend_df) >= 2:
-            slope = np.polyfit(trend_df['year'], trend_df[selected_pollutant], 1)[0]
-            verdict = 'Meningkat ⬆️' if slope > 0 else ('Menurun ⬇️' if slope < 0 else 'Stabil ➡️')
+        slope_df = q_df.copy()
+        slope_df["q_num"] = range(1, len(slope_df) + 1)
+    
+        if len(slope_df) >= 2:
+            slope = np.polyfit(slope_df["q_num"], slope_df[selected_pollutant], 1)[0]
+            verdict = (
+                'Meningkat ⬆️' if slope > 0 else
+                ('Menurun ⬇️' if slope < 0 else 'Stabil ➡️'))
             st.markdown(
-                f"**💡 Kesimpulan:** Tren {selected_pollutant} di {selected_station} cenderung **{verdict}** "
-                f"(slope = {slope:.3f}).")
-
-        
+                f"**💡 Kesimpulan:** Tren {selected_pollutant} di {selected_station} "
+                f"cenderung **{verdict}** (slope = {slope:.3f}).")
+            
 st.markdown("---")
 
 # -------------------------
