@@ -478,7 +478,7 @@ else:
         title=f"Tren {selected_pollutant} per Tahun – {selected_station}",
         labels={
             "quarter": "Quarter",
-            selected_pollutant: f"{selected_pollutant} (µg/m³)"}
+            selected_pollutant: f"{selected_pollutant} (µg/m³)"},
         color_discrete_sequence=["#FF9E7A"])
 
     fig.update_layout(
