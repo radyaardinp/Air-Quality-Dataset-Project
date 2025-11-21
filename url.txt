@@ -1,1 +1,1 @@
-https://air-quality-dataset-project-dash.streamlit.app/#air-quality-dashboard
+https://air-quality-dataset-project-rd.streamlit.app/
